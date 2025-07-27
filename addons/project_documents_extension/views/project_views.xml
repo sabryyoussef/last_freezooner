@@ -111,37 +111,65 @@
                         </form>
                     </field>
                 </group>
-                <group string="Checkpoint Actions (for testing)">
-                    <group string="Handover">
-                        <field name="is_complete_return_hand" widget="radio"/>
-                        <field name="is_confirm_hand" widget="radio"/>
-                        <field name="is_update_hand" widget="radio"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Compliance">
+                    <group string="Compliance Checkpoints">
+                        <group string="Complete Status">
+                            <field name="is_complete_return_compliance" widget="radio"/>
+                        </group>
+                        <group string="Confirm Status">
+                            <field name="is_confirm_compliance" widget="radio"/>
+                        </group>
+                        <group string="Update Status">
+                            <field name="is_update_compliance" widget="radio"/>
+                        </group>
                     </group>
-                    <group string="Compliance">
-                        <field name="is_complete_return_compliance" widget="radio"/>
-                        <field name="is_confirm_compliance" widget="radio"/>
-                        <field name="is_update_compliance" widget="radio"/>
+                </page>
+                <page string="Partner Fields">
+                    <group string="Partner Fields Checkpoints">
+                        <group string="Complete Status">
+                            <field name="is_complete_return_partner_fields" widget="radio"/>
+                        </group>
+                        <group string="Confirm Status">
+                            <field name="is_confirm_partner_fields" widget="radio"/>
+                        </group>
+                        <group string="Update Status">
+                            <field name="is_update_partner_fields" widget="radio"/>
+                        </group>
                     </group>
-                    <group string="Required Documents">
-                        <field name="is_complete_return_required" widget="radio"/>
-                        <field name="is_confirm_required" widget="radio"/>
-                        <field name="is_update_required" widget="radio"/>
+                </page>
+                <page string="Handover">
+                    <group string="Handover Checkpoints">
+                        <group string="Complete Status">
+                            <field name="is_complete_return_hand" widget="radio"/>
+                        </group>
+                        <group string="Confirm Status">
+                            <field name="is_confirm_hand" widget="radio"/>
+                        </group>
+                        <group string="Update Status">
+                            <field name="is_update_hand" widget="radio"/>
+                        </group>
                     </group>
-                    <group string="Deliverable Documents">
-                        <field name="is_complete_return_deliverable" widget="radio"/>
-                        <field name="is_confirm_deliverable" widget="radio"/>
-                        <field name="is_update_deliverable" widget="radio"/>
+                </page>
+                <page string="Document Status">
+                    <group string="Document Collection Status">
+                        <group string="Required Documents">
+                            <field name="is_complete_return_required" widget="radio"/>
+                            <field name="is_confirm_required" widget="radio"/>
+                            <field name="is_update_required" widget="radio"/>
+                        </group>
+                        <group string="Deliverable Documents">
+                            <field name="is_complete_return_deliverable" widget="radio"/>
+                            <field name="is_confirm_deliverable" widget="radio"/>
+                            <field name="is_update_deliverable" widget="radio"/>
+                        </group>
+                        <group string="Additional Status">
+                            <field name="is_document_collection_complete" widget="radio"/>
+                            <field name="is_process_complete" widget="radio"/>
+                        </group>
                     </group>
-                    <group string="Partner Fields">
-                        <field name="is_complete_return_partner_fields" widget="radio"/>
-                        <field name="is_confirm_partner_fields" widget="radio"/>
-                        <field name="is_update_partner_fields" widget="radio"/>
-                    </group>
-                    <group string="Additional">
-                        <field name="is_document_collection_complete" widget="radio"/>
-                        <field name="is_process_complete" widget="radio"/>
-                    </group>
-                </group>
+                </page>
             </xpath>
         </field>
     </record>
