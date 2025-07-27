@@ -1,0 +1,148 @@
+<odoo>
+    <record id="view_project_list_documents_extension" model="ir.ui.view">
+        <field name="name">project.project.list.documents.extension</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='display_name']" position="after">
+                <field name="sale_order_id" optional="show" string="Sale Order"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_task_form2_checkpoint_extension" model="ir.ui.view">
+        <field name="name">project.task.form2.checkpoint.extension</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Required Document">
+                    <div class="o_row" style="display: flex; align-items: center;">
+                        <div>
+                            <button name="action_complete_required_documents" type="object" string="Complete" class="btn-primary"
+                                invisible="required_document_complete"/>
+                            <button name="action_confirm_required_documents" type="object" string="Confirm" class="btn-secondary"
+                                invisible="required_document_confirm"/>
+                            <button name="action_update_required_documents" type="object" string="Update" class="btn-secondary"
+                                invisible="required_document_update"/>
+                        </div>
+                        <div style="margin-left: 24px;">
+                            <field name="required_document_complete" widget="boolean_toggle" readonly="1"/>
+                            <button name="action_reset_required_document_complete" type="object" string="Reset" class="btn-link"
+                                invisible="not required_document_complete"/>
+                            <field name="required_document_confirm" widget="boolean_toggle" readonly="1"/>
+                            <button name="action_reset_required_document_confirm" type="object" string="Reset" class="btn-link"
+                                invisible="not required_document_confirm"/>
+                            <field name="required_document_update" widget="boolean_toggle" readonly="1"/>
+                            <button name="action_reset_required_document_update" type="object" string="Reset" class="btn-link"
+                                invisible="not required_document_update"/>
+                        </div>
+                    </div>
+                    <field name="document_required_type_ids">
+                        <list editable="bottom">
+                            <field name="document_id"/>
+                            <field name="is_required"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                            <button name="action_upload_document" type="object" string="Upload" icon="fa-upload"/>
+                        </list>
+                        <form>
+                            <group>
+                                <field name="document_id"/>
+                                <field name="is_required"/>
+                                <field name="attachment_ids" widget="many2many_binary"/>
+                            </group>
+                        </form>
+                    </field>
+                </page>
+                <page string="Deliverable Document">
+                    <div class="o_row" style="display: flex; align-items: center;">
+                        <div>
+                            <button name="action_complete_deliverable_documents" type="object" string="Complete" class="btn-primary"
+                                invisible="deliverable_document_complete"/>
+                            <button name="action_confirm_deliverable_documents" type="object" string="Confirm" class="btn-secondary"
+                                invisible="deliverable_document_confirm"/>
+                            <button name="action_update_deliverable_documents" type="object" string="Update" class="btn-secondary"
+                                invisible="deliverable_document_update"/>
+                        </div>
+                        <div style="margin-left: 24px;">
+                            <field name="deliverable_document_complete" widget="boolean_toggle" readonly="1"/>
+                            <button name="action_reset_deliverable_document_complete" type="object" string="Reset" class="btn-link"
+                                invisible="not deliverable_document_complete"/>
+                            <field name="deliverable_document_confirm" widget="boolean_toggle" readonly="1"/>
+                            <button name="action_reset_deliverable_document_confirm" type="object" string="Reset" class="btn-link"
+                                invisible="not deliverable_document_confirm"/>
+                            <field name="deliverable_document_update" widget="boolean_toggle" readonly="1"/>
+                            <button name="action_reset_deliverable_document_update" type="object" string="Reset" class="btn-link"
+                                invisible="not deliverable_document_update"/>
+                        </div>
+                    </div>
+                    <field name="document_type_ids">
+                        <list editable="bottom">
+                            <field name="document_id"/>
+                            <field name="is_required"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                            <button name="action_upload_document" type="object" string="Upload" icon="fa-upload"/>
+                        </list>
+                        <form>
+                            <group>
+                                <field name="document_id"/>
+                                <field name="is_required"/>
+                                <field name="attachment_ids" widget="many2many_binary"/>
+                            </group>
+                        </form>
+                    </field>
+                </page>
+            </xpath>
+            <xpath expr="//page[@name='extra_info']" position="inside">
+                <group string="Checkpoint Configuration Rules">
+                    <field name="task_checkpoint_ids">
+                        <list editable="bottom">
+                            <field name="checkpoint_ids" widget="many2many_tags"/>
+                            <field name="stage_id"/>
+                            <field name="milestone_id"/>
+                            <field name="sequence"/>
+                        </list>
+                        <form>
+                            <group>
+                                <field name="checkpoint_ids" widget="many2many_tags"/>
+                                <field name="stage_id"/>
+                                <field name="milestone_id"/>
+                                <field name="sequence"/>
+                            </group>
+                        </form>
+                    </field>
+                </group>
+                <group string="Checkpoint Actions (for testing)">
+                    <group string="Handover">
+                        <field name="is_complete_return_hand" widget="radio"/>
+                        <field name="is_confirm_hand" widget="radio"/>
+                        <field name="is_update_hand" widget="radio"/>
+                    </group>
+                    <group string="Compliance">
+                        <field name="is_complete_return_compliance" widget="radio"/>
+                        <field name="is_confirm_compliance" widget="radio"/>
+                        <field name="is_update_compliance" widget="radio"/>
+                    </group>
+                    <group string="Required Documents">
+                        <field name="is_complete_return_required" widget="radio"/>
+                        <field name="is_confirm_required" widget="radio"/>
+                        <field name="is_update_required" widget="radio"/>
+                    </group>
+                    <group string="Deliverable Documents">
+                        <field name="is_complete_return_deliverable" widget="radio"/>
+                        <field name="is_confirm_deliverable" widget="radio"/>
+                        <field name="is_update_deliverable" widget="radio"/>
+                    </group>
+                    <group string="Partner Fields">
+                        <field name="is_complete_return_partner_fields" widget="radio"/>
+                        <field name="is_confirm_partner_fields" widget="radio"/>
+                        <field name="is_update_partner_fields" widget="radio"/>
+                    </group>
+                    <group string="Additional">
+                        <field name="is_document_collection_complete" widget="radio"/>
+                        <field name="is_process_complete" widget="radio"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo> 

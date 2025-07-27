@@ -1,0 +1,25 @@
+{
+    'name': 'Project Documents Extension',
+    'version': '18.0.1.0.0',
+    'summary': 'Add deliverable and required documents to projects, inherited from product template',
+    'author': 'Sabry Youssef',
+    'category': 'Project',
+    'depends': [
+        'project',
+        'documents',
+        'product',
+        'sale',
+        'sale_project',
+    ],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/project_views.xml',
+        'views/product_views.xml',
+        'data/reached_checkpoint_data.xml',
+        'data/data.xml',
+        'wizard/document_upload_wizard.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'license': 'LGPL-3',
+} 

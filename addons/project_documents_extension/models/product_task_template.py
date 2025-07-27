@@ -1,0 +1,397 @@
+from odoo import api
+from odoo import models, fields
+from odoo.exceptions import ValidationError
+
+class ProductTaskTemplate(models.Model):
+    _name = 'product.task.template'
+    _description = 'Product Task Template'
+    _order = 'sequence, id'
+
+    name = fields.Char(string='Task Name', required=True)
+    sequence = fields.Integer(string='Sequence', default=10)
+    product_tmpl_id = fields.Many2one('product.template', string='Product Template', required=True, ondelete='cascade')
+    description = fields.Text(string='Description')
+    user_ids = fields.Many2many('res.users', string='Assignees')
+    stage_id = fields.Many2one('project.task.type', string='Initial Stage')
+    planned_hours = fields.Float(string='Planned Hours')
+    priority = fields.Selection([('0', 'Low'), ('1', 'High')], string='Priority', default='0')
+    subtask_ids = fields.One2many('product.subtask.template', 'task_template_id', string='Subtasks')
+    subtask_count = fields.Integer(string='Subtask Count', compute='_compute_subtask_count')
+    checkpoint_ids = fields.One2many(
+        'product.task.template.checkpoint', 'task_template_id', string='Reached Checkpoints'
+    )
+
+    def _compute_subtask_count(self):
+        for template in self:
+            template.subtask_count = len(template.subtask_ids)
+
+class ProductSubtaskTemplate(models.Model):
+    _name = 'product.subtask.template'
+    _description = 'Product Subtask Template'
+    _order = 'sequence, id'
+
+    name = fields.Char(string='Subtask Name', required=True)
+    sequence = fields.Integer(string='Sequence', default=10)
+    task_template_id = fields.Many2one('product.task.template', string='Parent Task Template', required=True, ondelete='cascade')
+    description = fields.Text(string='Description')
+    user_ids = fields.Many2many('res.users', string='Assignees')
+    stage_id = fields.Many2one('project.task.type', string='Initial Stage')
+    planned_hours = fields.Float(string='Planned Hours')
+    priority = fields.Selection([('0', 'Low'), ('1', 'High')], string='Priority', default='0')
+    milestone_message = fields.Text(string='Milestone Message')
+
+class ReachedCheckpoint(models.Model):
+    _name = 'reached.checkpoint'
+    _description = 'Reached Checkpoint'
+
+    name = fields.Char(string='Checkpoint Name', required=True)
+
+class ProductTaskTemplateCheckpoint(models.Model):
+    _name = 'product.task.template.checkpoint'
+    _description = 'Product Task Template Checkpoint'
+    _order = 'sequence, id'
+
+    task_template_id = fields.Many2one('product.task.template', string='Task Template', required=True, ondelete='cascade')
+    checkpoint_ids = fields.Many2many('reached.checkpoint', string='Reached Checkpoints')
+    stage_id = fields.Many2one('project.task.type', string='Stage')
+    milestone_id = fields.Many2one('project.milestone', string='Milestone')
+    sequence = fields.Integer(string='Sequence', default=10)
+
+class TaskCheckpoint(models.Model):
+    _name = 'task.checkpoint'
+    _description = 'Task Checkpoint'
+    _order = 'sequence, id'
+
+    task_id = fields.Many2one('project.task', string='Task', required=True, ondelete='cascade')
+    checkpoint_ids = fields.Many2many('reached.checkpoint', string='Reached Checkpoints')
+    stage_id = fields.Many2one('project.task.type', string='Stage')
+    milestone_id = fields.Many2one('project.milestone', string='Milestone')
+    sequence = fields.Integer(string='Sequence', default=10)
+
+class ProjectTask(models.Model):
+    _inherit = 'project.task'
+
+    task_checkpoint_ids = fields.One2many('task.checkpoint', 'task_id', string='Checkpoints')
+    
+    # Handover checkpoints
+    is_complete_return_hand = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Handover Complete", default='not_started')
+    
+    is_confirm_hand = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Handover Confirm", default='not_started')
+    
+    is_update_hand = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Update Handover", default='not_started')
+
+    # Compliance checkpoints
+    is_complete_return_compliance = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Compliance Complete", default='not_started')
+    
+    is_confirm_compliance = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Compliance Confirm", default='not_started')
+    
+    is_update_compliance = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Update Compliance", default='not_started')
+
+    # Required document checkpoints
+    is_complete_return_required = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Required Document Complete", default='not_started')
+    
+    is_confirm_required = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Required Document Confirm", default='not_started')
+    
+    is_update_required = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Update Required Document", default='not_started')
+
+    # Deliverable document checkpoints
+    is_complete_return_deliverable = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Deliverable Document Complete", default='not_started')
+    
+    is_confirm_deliverable = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Deliverable Document Confirm", default='not_started')
+    
+    is_update_deliverable = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Update Deliverable Document", default='not_started')
+
+    # Partner fields checkpoints
+    is_complete_return_partner_fields = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Partner Fields Complete", default='not_started')
+    
+    is_confirm_partner_fields = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Partner Fields Confirm", default='not_started')
+    
+    is_update_partner_fields = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string="Update Partner Fields", default='not_started')
+
+    # Additional checkpoints
+    is_document_collection_complete = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete')
+    ], string="Document Collection Complete", default='not_started')
+    
+    is_process_complete = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('complete', 'Complete')
+    ], string="Process Complete", default='not_started')
+
+    # --- Workflow checkboxes for Required Documents ---
+    required_document_complete = fields.Boolean(string="Required Document Complete", default=False)
+    required_document_confirm = fields.Boolean(string="Required Document Confirm", default=False)
+    required_document_update = fields.Boolean(string="Required Document Update", default=False)
+
+    # --- Workflow checkboxes for Deliverable Documents ---
+    deliverable_document_complete = fields.Boolean(string="Deliverable Document Complete", default=False)
+    deliverable_document_confirm = fields.Boolean(string="Deliverable Document Confirm", default=False)
+    deliverable_document_update = fields.Boolean(string="Deliverable Document Update", default=False)
+
+    def _validate_documents_uploaded(self):
+        missing_docs = []
+        # Check required documents
+        for line in self.document_required_type_ids:
+            if getattr(line, 'is_required', False):
+                # Check for attachments on the document line
+                has_attachment = False
+                if hasattr(line, 'attachment_ids') and line.attachment_ids:
+                    has_attachment = True
+                # Check for attachments on the project/task
+                if not has_attachment:
+                    attachments = self.env['ir.attachment'].search([
+                        ('res_model', '=', self._name),
+                        ('res_id', '=', self.id),
+                        ('name', '=', line.document_id.name)
+                    ], limit=1)
+                    if attachments:
+                        has_attachment = True
+                if not has_attachment:
+                    missing_docs.append(line.document_id.display_name or line.document_id.name or 'Unknown Document')
+        # Check deliverable documents
+        for line in self.document_type_ids:
+            if getattr(line, 'is_required', False):
+                has_attachment = False
+                if hasattr(line, 'attachment_ids') and line.attachment_ids:
+                    has_attachment = True
+                if not has_attachment:
+                    attachments = self.env['ir.attachment'].search([
+                        ('res_model', '=', self._name),
+                        ('res_id', '=', self.id),
+                        ('name', '=', line.document_id.name)
+                    ], limit=1)
+                    if attachments:
+                        has_attachment = True
+                if not has_attachment:
+                    missing_docs.append(line.document_id.display_name or line.document_id.name or 'Unknown Document')
+        if missing_docs:
+            raise ValidationError(
+                "You must upload the following required/deliverable documents before completing this action:\n- " + "\n- ".join(missing_docs)
+            )
+
+    def write(self, vals):
+        # Prevent recursion
+        if self.env.context.get('no_checkpoint_write'):
+            return super().write(vals)
+
+        checkpoint_map = {
+            'is_complete_return_hand': 'Handover Complete',
+            'is_confirm_hand': 'Handover Confirm',
+            'is_update_hand': 'Update Handover',
+            'is_complete_return_compliance': 'Compliance Complete',
+            'is_confirm_compliance': 'Compliance Confirm',
+            'is_update_compliance': 'Update Compliance',
+            'is_complete_return_required': 'Required Document Complete',
+            'is_confirm_required': 'Required Document Confirm',
+            'is_update_required': 'Update Required Document',
+            'is_complete_return_deliverable': 'Deliverable Document Complete',
+            'is_confirm_deliverable': 'Deliverable Document Confirm',
+            'is_update_deliverable': 'Update Deliverable Document',
+            'is_complete_return_partner_fields': 'Partner Fields Complete',
+            'is_confirm_partner_fields': 'Partner Fields Confirm',
+            'is_update_partner_fields': 'Update Partner Fields',
+            'is_document_collection_complete': 'Document Collection Complete',
+            'is_process_complete': 'Process Complete',
+        }
+
+        # Copy vals to avoid mutating the original dict
+        vals = vals.copy()
+
+        # --- Document validation logic on checkpoint field change ---
+        for field in ['is_complete_return_required', 'is_confirm_required', 'is_update_required',
+                      'is_complete_return_deliverable', 'is_confirm_deliverable', 'is_update_deliverable']:
+            if field in vals:
+                if vals[field] in ['complete', 'confirmed', 'updated']:
+                    self._validate_documents_uploaded()
+
+        for task in self:
+            for checkpoint_line in task.task_checkpoint_ids:
+                for field, checkpoint_name in checkpoint_map.items():
+                    if checkpoint_name in checkpoint_line.checkpoint_ids.mapped('name'):
+                        field_value = vals.get(field, getattr(task, field))
+                        if field_value in ['complete', 'confirmed', 'updated']:
+                            if checkpoint_line.stage_id and (vals.get('stage_id', task.stage_id.id) != checkpoint_line.stage_id.id):
+                                vals['stage_id'] = checkpoint_line.stage_id.id
+
+        return super(ProjectTask, self.with_context(no_checkpoint_write=True)).write(vals)
+
+    def update_checkpoint_status(self, checkpoint_field, status):
+        """
+        Update a specific checkpoint field status
+        Args:
+            checkpoint_field (str): Field name to update (e.g., 'is_complete_return_hand')
+            status (str): New status ('not_started', 'in_progress', 'complete', 'confirmed', 'updated')
+        """
+        if hasattr(self, checkpoint_field):
+            self.write({checkpoint_field: status})
+            return True
+        return False
+
+    def complete_checkpoint(self, checkpoint_field):
+        self._validate_documents_uploaded()
+        return self.update_checkpoint_status(checkpoint_field, 'complete')
+
+    def confirm_checkpoint(self, checkpoint_field):
+        self._validate_documents_uploaded()
+        return self.update_checkpoint_status(checkpoint_field, 'confirmed')
+
+    def update_checkpoint(self, checkpoint_field):
+        self._validate_documents_uploaded()
+        return self.update_checkpoint_status(checkpoint_field, 'updated')
+
+    def start_checkpoint(self, checkpoint_field):
+        """Set a checkpoint to in progress status"""
+        return self.update_checkpoint_status(checkpoint_field, 'in_progress')
+
+    def reset_checkpoint(self, checkpoint_field):
+        """Reset a checkpoint to not started status"""
+        return self.update_checkpoint_status(checkpoint_field, 'not_started') 
+
+    # --- Button Actions for Required Documents ---
+    def action_complete_required_documents(self):
+        self._validate_documents_uploaded()
+        self.is_complete_return_required = 'complete'
+        self.required_document_complete = True
+
+    def action_confirm_required_documents(self):
+        self._validate_documents_uploaded()
+        self.is_confirm_required = 'confirmed'
+        self.required_document_confirm = True
+
+    def action_update_required_documents(self):
+        self._validate_documents_uploaded()
+        self.is_update_required = 'updated'
+        self.required_document_update = True
+
+    def action_reset_required_document_complete(self):
+        self.required_document_complete = False
+        self.is_complete_return_required = 'not_started'
+
+    def action_reset_required_document_confirm(self):
+        self.required_document_confirm = False
+        self.is_confirm_required = 'not_started'
+
+    def action_reset_required_document_update(self):
+        self.required_document_update = False
+        self.is_update_required = 'not_started'
+
+    # --- Button Actions for Deliverable Documents ---
+    def action_complete_deliverable_documents(self):
+        self._validate_documents_uploaded()
+        self.is_complete_return_deliverable = 'complete'
+        self.deliverable_document_complete = True
+
+    def action_confirm_deliverable_documents(self):
+        self._validate_documents_uploaded()
+        self.is_confirm_deliverable = 'confirmed'
+        self.deliverable_document_confirm = True
+
+    def action_update_deliverable_documents(self):
+        self._validate_documents_uploaded()
+        self.is_update_deliverable = 'updated'
+        self.deliverable_document_update = True
+
+    def action_reset_deliverable_document_complete(self):
+        self.deliverable_document_complete = False
+        self.is_complete_return_deliverable = 'not_started'
+
+    def action_reset_deliverable_document_confirm(self):
+        self.deliverable_document_confirm = False
+        self.is_confirm_deliverable = 'not_started'
+
+    def action_reset_deliverable_document_update(self):
+        self.deliverable_document_update = False
+        self.is_update_deliverable = 'not_started' 

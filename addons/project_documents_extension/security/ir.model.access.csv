@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_project_document_required_line,project_document_required_line,model_project_document_required_line,,1,1,1,1
+access_project_document_type_line,project_document_type_line,model_project_document_type_line,,1,1,1,1
+access_project_document_category,project_document_category,model_project_document_category,,1,1,1,1
+access_project_document_type,project_document_type,model_project_document_type,,1,1,1,1
+access_product_task_template,product_task_template,model_product_task_template,,1,1,1,1
+access_product_subtask_template,product_subtask_template,model_product_subtask_template,,1,1,1,1
+product.task.template.checkpoint,product.task.template.checkpoint,model_product_task_template_checkpoint,base.group_user,1,0,0,0
+product.task.template.checkpoint,product.task.template.checkpoint,model_product_task_template_checkpoint,base.group_system,1,1,1,1
+reached.checkpoint,reached.checkpoint,model_reached_checkpoint,base.group_user,1,0,0,0
+reached.checkpoint,reached.checkpoint,model_reached_checkpoint,base.group_system,1,1,1,1
+task.checkpoint,task.checkpoint,model_task_checkpoint,base.group_user,1,0,0,0
+task.checkpoint,task.checkpoint,model_task_checkpoint,base.group_system,1,1,1,1
+access_document_upload_wizard_user,access.document.upload.wizard.user,model_document_upload_wizard,base.group_user,1,1,1,0

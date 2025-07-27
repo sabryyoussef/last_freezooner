@@ -1,0 +1,29 @@
+<odoo>
+    <record id="view_document_upload_wizard_form" model="ir.ui.view">
+        <field name="name">document.upload.wizard.form</field>
+        <field name="model">document.upload.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Upload Document">
+                <group>
+                    <field name="project_id"/>
+                    <field name="user_id"/>
+                    <field name="name"/>
+                    <field name="document_type"/>
+                    <field name="comment"/>
+                </group>
+                <footer>
+                    <button name="action_upload" type="object" string="Upload" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_document_upload_wizard" model="ir.actions.act_window">
+        <field name="name">Upload Document</field>
+        <field name="res_model">document.upload.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_document_upload_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo> 
