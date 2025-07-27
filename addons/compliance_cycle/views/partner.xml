@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Partner Form View with Compliance Fields -->
+        <record id="res_partner_compliance_form" model="ir.ui.view">
+            <field name="name">res.partner.compliance.form</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <!-- Add business structure fields after VAT -->
+                <xpath expr="//field[@name='vat']" position="after">
+                    <field name="business_structure_id" 
+                           invisible="company_type != 'company'"/>
+                    <field name="nationality_id" 
+                           invisible="company_type != 'person'"/>
+                </xpath>
+                
+                <!-- Add compliance status in header -->
+                <xpath expr="//sheet" position="before">
+                    <header>
+                        <field name="compliance_status" widget="statusbar" 
+                               statusbar_visible="pending,in_progress,completed"/>
+                    </header>
+                </xpath>
+                
+                <!-- Add compliance pages after internal notes -->
+                <xpath expr="//page[@name='internal_notes']" position="after">
+                    <!-- Address Management Page -->
+                    <page string="Address Management" name="address_management">
+                        <field name="partner_address_lines">
+                            <list editable="bottom">
+                                <field name="name"/>
+                                <field name="type"/>
+                                <field name="street"/>
+                                <field name="city"/>
+                                <field name="country_id"/>
+                                <field name="is_primary"/>
+                            </list>
+                        </field>
+                    </page>
+                    
+                    <!-- Shareholder Compliance Page -->
+                    <page string="Shareholder Compliance" name="shareholder_compliance">
+                        <field name="compliance_shareholder_ids">
+                            <list editable="bottom">
+                                <field name="name"/>
+                                <field name="contact_id"/>
+                                <field name="ubo_id"/>
+                                <field name="shareholding"/>
+                                <field name="relationship_ids" widget="many2many_tags"/>
+                            </list>
+                        </field>
+                    </page>
+                    
+                    <!-- Project Products Page -->
+                    <page string="Project Products" name="project_products">
+                        <field name="project_product_ids">
+                            <list editable="bottom">
+                                <field name="name"/>
+                                <field name="product_id"/>
+                                <field name="quantity"/>
+                                <field name="unit_price"/>
+                                <field name="total_price"/>
+                            </list>
+                        </field>
+                    </page>
+                </xpath>
+                
+                <!-- Add compliance notes field -->
+                <xpath expr="//group[@name='misc']" position="after">
+                    <group string="Compliance Information">
+                        <field name="compliance_notes" placeholder="Enter compliance notes..."/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo> 

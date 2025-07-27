@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Compliance Manager Group -->
+        <record id="group_compliance_manager" model="res.groups">
+            <field name="name">Compliance Manager</field>
+            <field name="category_id" ref="base.module_category_human_resources"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Compliance User Group -->
+        <record id="group_compliance_user" model="res.groups">
+            <field name="name">Compliance User</field>
+            <field name="category_id" ref="base.module_category_human_resources"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+    </data>
+</odoo> 

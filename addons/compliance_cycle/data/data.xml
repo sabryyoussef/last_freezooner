@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Business Structure Types -->
+        <record id="business_structure_llc" model="res.partner.business.structure">
+            <field name="name">Limited Liability Company</field>
+            <field name="code">LLC</field>
+            <field name="description">Limited Liability Company structure</field>
+        </record>
+
+        <record id="business_structure_corp" model="res.partner.business.structure">
+            <field name="name">Corporation</field>
+            <field name="code">CORP</field>
+            <field name="description">Corporation structure</field>
+        </record>
+
+        <record id="business_structure_partnership" model="res.partner.business.structure">
+            <field name="name">Partnership</field>
+            <field name="code">PART</field>
+            <field name="description">Partnership structure</field>
+        </record>
+
+        <record id="business_structure_sole_proprietorship" model="res.partner.business.structure">
+            <field name="name">Sole Proprietorship</field>
+            <field name="code">SOLE</field>
+            <field name="description">Sole Proprietorship structure</field>
+        </record>
+
+        <!-- Relationship Types -->
+        <record id="relationship_family" model="res.partner.relationship">
+            <field name="name">Family</field>
+            <field name="code">FAM</field>
+            <field name="description">Family relationship</field>
+        </record>
+
+        <record id="relationship_business" model="res.partner.relationship">
+            <field name="name">Business Partner</field>
+            <field name="code">BUS</field>
+            <field name="description">Business partner relationship</field>
+        </record>
+
+        <record id="relationship_investor" model="res.partner.relationship">
+            <field name="name">Investor</field>
+            <field name="code">INV</field>
+            <field name="description">Investor relationship</field>
+        </record>
+
+        <record id="relationship_consultant" model="res.partner.relationship">
+            <field name="name">Consultant</field>
+            <field name="code">CON</field>
+            <field name="description">Consultant relationship</field>
+        </record>
+    </data>
+</odoo> 

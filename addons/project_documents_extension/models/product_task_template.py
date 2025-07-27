@@ -395,3 +395,59 @@ class ProjectTask(models.Model):
     def action_reset_deliverable_document_update(self):
         self.deliverable_document_update = False
         self.is_update_deliverable = 'not_started' 
+
+class TaskDocumentRequiredLines(models.Model):
+    _name = 'task.document.required.lines'
+    _description = 'Task Document Required Lines'
+
+    project_id = fields.Many2one('project.project', string='Project', ondelete='cascade')
+    task_id = fields.Many2one('project.task', string='Task', ondelete='cascade')
+    document_id = fields.Many2one('project.document.type', string='Document Type', required=True)
+    name = fields.Char(string='Document Name')
+    is_required = fields.Boolean(string='Required', default=False)
+    is_moved = fields.Boolean(string='Is Moved', default=False)
+    is_ready = fields.Boolean(string='Is Ready', default=False)
+    issue_date = fields.Date('Issue Date')
+    expiration_date = fields.Date('Expiration Date')
+    document = fields.Binary(string='Document')
+
+class ProductTemplateRequiredDocuments(models.Model):
+    _name = 'product.template.required.documents'
+    _description = 'Product Template Required Documents'
+
+    rating_id = fields.Many2one('risk.rating', string='Rating')
+    product_tmpl_id = fields.Many2one(
+        "product.template",
+        string="Product Template",
+        required=False,  # Make it optional
+        ondelete="cascade",
+        index=True,
+    )
+    document_id = fields.Many2one('project.document.type', string='Document Type', required=True)
+    is_required = fields.Boolean(string='Required', default=False)
+    
+    @api.constrains('product_tmpl_id', 'rating_id')
+    def _check_required_reference(self):
+        """Ensure either product_tmpl_id or rating_id is set"""
+        for record in self:
+            if not record.product_tmpl_id and not record.rating_id:
+                raise ValidationError(
+                    "Either Product Template or Rating must be set."
+                ) 
+
+class CheckpointHistory(models.Model):
+    _name = 'checkpoint.history'
+    _description = 'Checkpoint History'
+    _order = 'date desc'
+
+    task_id = fields.Many2one('project.task', string='Task', required=True)
+    checkpoint_name = fields.Char(string='Checkpoint Name', required=True)
+    status = fields.Selection([
+        ('started', 'Started'),
+        ('completed', 'Completed'),
+        ('confirmed', 'Confirmed'),
+        ('updated', 'Updated')
+    ], string='Status', required=True)
+    date = fields.Datetime(string='Date', default=fields.Datetime.now)
+    user_id = fields.Many2one('res.users', string='User', default=lambda self: self.env.user)
+    notes = fields.Text(string='Notes')
