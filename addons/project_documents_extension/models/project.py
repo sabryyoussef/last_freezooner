@@ -72,6 +72,7 @@ class ProjectDocumentType(models.Model):
 class ProjectDocumentTypeLine(models.Model):
     _name = 'project.document.type.line'
     _description = 'Project Deliverable Document Type Line'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     project_id = fields.Many2one('project.project', string='Project', ondelete='cascade')
     task_id = fields.Many2one('project.task', string='Task', ondelete='cascade')
@@ -104,10 +105,31 @@ class ProjectDocumentTypeLine(models.Model):
         default=fields.datetime.now(),
     )
 
-    # @api.depends('expiry_date')
-    # def _compute_expired(self):
-    #     for record in self:
-    #         record.is_expired = record.expiry_date and record.expiry_date < fields.Date.today()
+    @api.depends('expiry_date')
+    def _compute_expired(self):
+        """Compute document expiry status with smooth error handling"""
+        try:
+            today = fields.Date.today()
+            _logger.info(f"Computing expiry status for {len(self)} documents")
+            for record in self:
+                try:
+                    if record.expiry_date:
+                        is_expired = record.expiry_date < today
+                        record.is_expired = is_expired
+                        if is_expired:
+                            _logger.warning(f"Document {record.id} ({getattr(record, 'document_type_id', False) and record.document_type_id.name or 'Unknown'}) is EXPIRED (expiry: {record.expiry_date})")
+                        else:
+                            _logger.info(f"Document {record.id} ({getattr(record, 'document_type_id', False) and record.document_type_id.name or 'Unknown'}) is VALID (expiry: {record.expiry_date})")
+                    else:
+                        record.is_expired = False
+                        _logger.debug(f"Document {record.id} has no expiry date set")
+                except Exception as e:
+                    _logger.error(f"Error computing expiry for document {record.id}: {str(e)}")
+                    record.is_expired = False
+        except Exception as e:
+            _logger.error(f"Error in document expiry computation: {str(e)}")
+            for record in self:
+                record.is_expired = False
 
     def action_numbers(self):
         docs = self.env['project.document.type.line'].sudo().search([])
@@ -119,26 +141,122 @@ class ProjectDocumentTypeLine(models.Model):
         for vals in vals_list:
             if 'number' not in vals:
                 vals['number'] = self.env['ir.sequence'].next_by_code('project.document.type.line') or _("New")
-        return super(ProjectDocumentTypeLine, self).create(vals_list)
+        records = super(ProjectDocumentTypeLine, self).create(vals_list)
+        
+        # Check for duplicates after creation
+        for record in records:
+            record._check_duplicate_after_create()
+        
+        return records
 
-    # @api.constrains('project_id', 'task_id', 'issue_date', 'document_type_id')
-    # def check_duplicate_document(self):
-    #     if self.env.context.get('bypass_duplicate_check'):
-    #         return
-    #     for rec in self:
-    #         domain = [
-    #             ('document_type_id', '=', rec.document_type_id.id),
-    #             ('issue_date', '=', rec.issue_date),
-    #             ('id', '!=', rec.id),
-    #         ]
-    #         if rec.project_id:
-    #             domain.append(('project_id', '=', rec.project_id.id))
-    #         if rec.task_id:
-    #             domain.append(('task_id', '=', rec.task_id.id))
-    #         
-    #         duplicate_document = self.search(domain)
-    #         if duplicate_document:
-    #             raise ValidationError(_("This document already exists!"))
+    def _check_duplicate_after_create(self):
+        """Check for duplicates after document creation"""
+        _logger.info(f"Checking for duplicates after create for required document {self.id}")
+        
+        try:
+            # Build domain to find potential duplicates
+            domain = [
+                ('document_type_id', '=', self.document_type_id.id),
+                ('id', '!=', self.id)
+            ]
+            
+            # Add context-specific conditions
+            if self.project_id:
+                domain.append(('project_id', '=', self.project_id.id))
+                context_info = f" in project {self.project_id.name}"
+            elif self.task_id:
+                domain.append(('task_id', '=', self.task_id.id))
+                context_info = f" in task {self.task_id.name}"
+            elif self.product_tmpl_id:
+                domain.append(('product_tmpl_id', '=', self.product_tmpl_id.id))
+                context_info = f" in product {self.product_tmpl_id.name}"
+            else:
+                context_info = ""
+            
+            duplicate_documents = self.search(domain)
+            _logger.info(f"Found {len(duplicate_documents)} potential duplicates for required document {self.id}")
+            
+            if duplicate_documents:
+                _logger.info(f"Duplicate required documents found: {duplicate_documents.ids}")
+                
+                for duplicate in duplicate_documents:
+                    # Check if attachments are the same
+                    if self.attachment_ids and duplicate.attachment_ids:
+                        self_attachment_ids = set(self.attachment_ids.mapped('id'))
+                        dup_attachment_ids = set(duplicate.attachment_ids.mapped('id'))
+                        
+                        if self_attachment_ids == dup_attachment_ids and self_attachment_ids:
+                            _logger.info(f"Duplicate required document detected with same attachments: {self.id} vs {duplicate.id}")
+                            
+                            # Post warning to project chatter
+                            if self.project_id:
+                                self.project_id.message_post(
+                                    body=_("⚠️ Duplicate required document detected: %s with same attachments as existing document%s") % (
+                                        self.document_type_id.name, context_info
+                                    )
+                                )
+                            
+                            # Prevent saving by raising ValidationError
+                            raise ValidationError(_("⚠️ Duplicate required document detected: %s with same attachments as existing document%s") % (
+                                self.document_type_id.name, context_info
+                            ))
+                    else:
+                        # If no attachments, check for same document type in same context
+                        _logger.info(f"Duplicate required document detected (same document type): {self.id} vs {duplicate.id}")
+                        
+                        # Post warning to project chatter
+                        if self.project_id:
+                            self.project_id.message_post(
+                                body=_("⚠️ Duplicate required document detected: %s (same document type)%s") % (
+                                    self.document_type_id.name, context_info
+                                )
+                            )
+                        
+                        # Prevent saving by raising ValidationError
+                        raise ValidationError(_("⚠️ Duplicate required document detected: %s (same document type)%s") % (
+                            self.document_type_id.name, context_info
+                        ))
+                        
+        except ValidationError:
+            # Re-raise ValidationError to prevent saving
+            raise
+        except Exception as e:
+            _logger.error(f"Error checking duplicate after create for required document {self.id}: {str(e)}")
+            import traceback
+            _logger.error(f"Full traceback: {traceback.format_exc()}")
+
+    @api.constrains('project_id', 'task_id', 'product_tmpl_id', 'document_type_id')
+    def check_duplicate_document(self):
+        """Check for duplicate documents - SIMPLIFIED VERSION"""
+        for record in self:
+            if not record.document_type_id:
+                continue
+                
+            # Build domain based on context
+            domain = [
+                ('document_type_id', '=', record.document_type_id.id),
+                ('id', '!=', record.id)
+            ]
+            
+            # Add context-specific filter
+            if record.product_tmpl_id:
+                domain.append(('product_tmpl_id', '=', record.product_tmpl_id.id))
+                context_name = record.product_tmpl_id.name
+            elif record.project_id:
+                domain.append(('project_id', '=', record.project_id.id))
+                context_name = record.project_id.name
+            elif record.task_id:
+                domain.append(('task_id', '=', record.task_id.id))
+                context_name = record.task_id.name
+            else:
+                continue  # Skip if no context
+            
+            # Check for duplicates
+            duplicates = self.search(domain)
+            if duplicates:
+                raise ValidationError(_(
+                    "⚠️ Duplicate document detected: '%s' already exists in '%s'"
+                ) % (record.document_type_id.name, context_name))
 
     def write(self, vals):
         res = super(ProjectDocumentTypeLine, self).write(vals)
@@ -166,10 +284,30 @@ class ProjectDocumentTypeLine(models.Model):
             }
         }
 
+    def _trigger_duplicate_popup(self, message):
+        """Trigger a popup notification for duplicate detection"""
+        try:
+            # Set context flag for notification
+            self.env.context = dict(self.env.context, 
+                duplicate_warning=True, 
+                duplicate_message=message,
+                duplicate_title=_('Duplicate Document Detected')
+            )
+            
+            # Log the notification
+            _logger.info(f"Duplicate popup triggered: {message}")
+            
+            return True
+            
+        except Exception as e:
+            _logger.error(f"Error triggering duplicate popup: {str(e)}")
+            return False
+
 
 class ProjectDocumentRequiredLine(models.Model):
     _name = 'project.document.required.line'
     _description = 'Project Required Document Type Line'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     project_id = fields.Many2one('project.project', string='Project', ondelete='cascade')
     task_id = fields.Many2one('project.task', string='Task', ondelete='cascade')
@@ -202,10 +340,31 @@ class ProjectDocumentRequiredLine(models.Model):
         default=fields.datetime.now(),
     )
 
-    # @api.depends('expiry_date')
-    # def _compute_expired(self):
-    #     for record in self:
-    #         record.is_expired = record.expiry_date and record.expiry_date < fields.Date.today()
+    @api.depends('expiry_date')
+    def _compute_expired(self):
+        """Compute document expiry status with smooth error handling"""
+        try:
+            today = fields.Date.today()
+            _logger.info(f"Computing expiry status for {len(self)} required documents")
+            for record in self:
+                try:
+                    if record.expiry_date:
+                        is_expired = record.expiry_date < today
+                        record.is_expired = is_expired
+                        if is_expired:
+                            _logger.warning(f"Required Document {record.id} ({getattr(record, 'document_type_id', False) and record.document_type_id.name or 'Unknown'}) is EXPIRED (expiry: {record.expiry_date})")
+                        else:
+                            _logger.info(f"Required Document {record.id} ({getattr(record, 'document_type_id', False) and record.document_type_id.name or 'Unknown'}) is VALID (expiry: {record.expiry_date})")
+                    else:
+                        record.is_expired = False
+                        _logger.debug(f"Required Document {record.id} has no expiry date set")
+                except Exception as e:
+                    _logger.error(f"Error computing expiry for required document {record.id}: {str(e)}")
+                    record.is_expired = False
+        except Exception as e:
+            _logger.error(f"Error in required document expiry computation: {str(e)}")
+            for record in self:
+                record.is_expired = False
 
     def action_numbers(self):
         docs = self.env['project.document.required.line'].sudo().search([])
@@ -217,26 +376,137 @@ class ProjectDocumentRequiredLine(models.Model):
         for vals in vals_list:
             if 'number' not in vals:
                 vals['number'] = self.env['ir.sequence'].next_by_code('project.document.required.line') or _("New")
-        return super(ProjectDocumentRequiredLine, self).create(vals_list)
+        records = super(ProjectDocumentRequiredLine, self).create(vals_list)
+        
+        # Check for duplicates after creation
+        for record in records:
+            record._check_duplicate_after_create()
+        
+        return records
 
-    # @api.constrains('project_id', 'task_id', 'issue_date', 'document_type_id')
-    # def check_duplicate_document(self):
-    #     if self.env.context.get('bypass_duplicate_check'):
-    #         return
-    #     for rec in self:
-    #         domain = [
-    #             ('document_type_id', '=', rec.document_type_id.id),
-    #             ('issue_date', '=', rec.issue_date),
-    #             ('id', '!=', rec.id),
-    #         ]
-    #         if rec.project_id:
-    #             domain.append(('project_id', '=', rec.project_id.id))
-    #         if rec.task_id:
-    #             domain.append(('task_id', '=', rec.task_id.id))
-    #         
-    #         duplicate_document = self.search(domain)
-    #         if duplicate_document:
-    #             raise ValidationError(_("This document already exists!"))
+    def _check_duplicate_after_create(self):
+        """Check for duplicates after document creation"""
+        _logger.info(f"🔍 DEBUG: _check_duplicate_after_create called for required document {self.id}")
+        _logger.info(f"🔍 DEBUG: Document type: {self.document_type_id.name if self.document_type_id else 'None'}")
+        _logger.info(f"🔍 DEBUG: Product template: {self.product_tmpl_id.name if self.product_tmpl_id else 'None'}")
+        _logger.info(f"🔍 DEBUG: Project: {self.project_id.name if self.project_id else 'None'}")
+        _logger.info(f"🔍 DEBUG: Attachments: {len(self.attachment_ids)}")
+        
+        try:
+            # Build domain for duplicate check - check multiple criteria
+            domain = [
+                ('document_type_id', '=', self.document_type_id.id),
+                ('id', '!=', self.id),
+            ]
+            
+            # Add project/task/product filters
+            if self.project_id:
+                domain.append(('project_id', '=', self.project_id.id))
+            if self.task_id:
+                domain.append(('task_id', '=', self.task_id.id))
+            if self.product_tmpl_id:
+                domain.append(('product_tmpl_id', '=', self.product_tmpl_id.id))
+            
+            _logger.info(f"🔍 DEBUG: Search domain: {domain}")
+            
+            # Search for duplicates with same document type and project/task/product
+            duplicate_documents = self.search(domain)
+            _logger.info(f"🔍 DEBUG: Found {len(duplicate_documents)} potential duplicates")
+            
+            if duplicate_documents:
+                _logger.info(f"🔍 DEBUG: Checking {len(duplicate_documents)} duplicates for attachments")
+                # Check if any duplicates have the same attachments
+                for duplicate in duplicate_documents:
+                    _logger.info(f"🔍 DEBUG: Checking duplicate {duplicate.id} with {len(duplicate.attachment_ids)} attachments")
+                    if self.attachment_ids and duplicate.attachment_ids:
+                        # Check if attachments are the same
+                        self_attachment_ids = set(self.attachment_ids.ids)
+                        dup_attachment_ids = set(duplicate.attachment_ids.ids)
+                        
+                        _logger.info(f"🔍 DEBUG: Self attachments: {self_attachment_ids}")
+                        _logger.info(f"🔍 DEBUG: Duplicate attachments: {dup_attachment_ids}")
+                        
+                        if self_attachment_ids == dup_attachment_ids and self_attachment_ids:
+                            context_info = ""
+                            if self.product_tmpl_id:
+                                context_info = f" in product {self.product_tmpl_id.name}"
+                            elif self.project_id:
+                                context_info = f" in project {self.project_id.name}"
+                            
+                            _logger.warning(f"Duplicate required document detected for {self.document_type_id.name} with same attachments{context_info}")
+                            # Post warning message to project chatter
+                            if self.project_id:
+                                self.project_id.message_post(
+                                    body=_("🚨 POPUP_WARNING: Duplicate required document detected: %s with same attachments as existing document%s") % (
+                                        self.document_type_id.name, context_info
+                                    )
+                                )
+                            # Trigger popup notification
+                            self._trigger_duplicate_popup(_('🚨 POPUP_WARNING: Duplicate required document detected: %s with same attachments as existing document%s') % (
+                                self.document_type_id.name, context_info
+                            ))
+                            break
+                    else:
+                        # If no attachments, check for same document type in same context
+                        context_info = ""
+                        if self.product_tmpl_id:
+                            context_info = f" in product {self.product_tmpl_id.name}"
+                        elif self.project_id:
+                            context_info = f" in project {self.project_id.name}"
+                        
+                        _logger.warning(f"Duplicate required document detected for {self.document_type_id.name} (same type){context_info}")
+                        # Post warning message to project chatter
+                        if self.project_id:
+                            self.project_id.message_post(
+                                body=_("🚨 POPUP_WARNING: Duplicate required document detected: %s (same document type)%s") % (
+                                    self.document_type_id.name, context_info
+                                )
+                            )
+                        # Trigger popup notification
+                        self._trigger_duplicate_popup(_('🚨 POPUP_WARNING: Duplicate required document detected: %s (same document type)%s') % (
+                            self.document_type_id.name, context_info
+                        ))
+                        break
+            else:
+                _logger.info(f"🔍 DEBUG: No duplicates found")
+                    
+        except Exception as e:
+            _logger.error(f"Error checking duplicate after create for required document {self.id}: {str(e)}")
+            import traceback
+            _logger.error(f"Full traceback: {traceback.format_exc()}")
+
+    @api.constrains('project_id', 'task_id', 'product_tmpl_id', 'document_type_id')
+    def check_duplicate_document(self):
+        """Check for duplicate required documents - SIMPLIFIED VERSION"""
+        for record in self:
+            if not record.document_type_id:
+                continue
+                
+            # Build domain based on context
+            domain = [
+                ('document_type_id', '=', record.document_type_id.id),
+                ('id', '!=', record.id)
+            ]
+            
+            # Add context-specific filter
+            if record.product_tmpl_id:
+                domain.append(('product_tmpl_id', '=', record.product_tmpl_id.id))
+                context_name = record.product_tmpl_id.name
+            elif record.project_id:
+                domain.append(('project_id', '=', record.project_id.id))
+                context_name = record.project_id.name
+            elif record.task_id:
+                domain.append(('task_id', '=', record.task_id.id))
+                context_name = record.task_id.name
+            else:
+                continue  # Skip if no context
+            
+            # Check for duplicates
+            duplicates = self.search(domain)
+            if duplicates:
+                raise ValidationError(_(
+                    "⚠️ Duplicate required document detected: '%s' already exists in '%s'"
+                ) % (record.document_type_id.name, context_name))
 
     def write(self, vals):
         res = super(ProjectDocumentRequiredLine, self).write(vals)
