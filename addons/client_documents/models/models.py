@@ -113,21 +113,21 @@ class ClientDocuments(models.Model):
                 ) or _("New")
         return super(ClientDocuments, self).create(vals_list)
 
-    @api.constrains("partner_id", "issue_date", "type_id")
-    def check_duplicate_document(self):
-        if self.env.context.get("bypass_duplicate_check"):
-            return
-        for rec in self:
-            duplicate_document = self.search(
-                [
-                    ("partner_id", "=", rec.partner_id.id),
-                    ("issue_date", "=", rec.issue_date),
-                    ("type_id", "=", rec.type_id.id),
-                    ("id", "!=", rec.id),
-                ]
-            )
-            if duplicate_document:
-                raise ValidationError("This document already exists!")
+    # @api.constrains("partner_id", "issue_date", "type_id")
+    # def check_duplicate_document(self):
+    #     if self.env.context.get("bypass_duplicate_check"):
+    #         return
+    #     for rec in self:
+    #         duplicate_document = self.search(
+    #             [
+    #                 ("partner_id", "=", rec.partner_id.id),
+    #                 ("issue_date", "=", rec.issue_date),
+    #                 ("type_id", "=", rec.type_id.id),
+    #                 ("id", "!=", rec.id),
+    #             ]
+    #         )
+    #         if duplicate_document:
+    #             raise ValidationError("This document already exists!")
 
     def write(self, vals):
         res = super(ClientDocuments, self).write(vals)

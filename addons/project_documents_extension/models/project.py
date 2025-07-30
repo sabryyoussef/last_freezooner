@@ -76,24 +76,24 @@ class ProjectDocumentTypeLine(models.Model):
                 vals['number'] = self.env['ir.sequence'].next_by_code('project.document.type.line') or _("New")
         return super(ProjectDocumentTypeLine, self).create(vals_list)
 
-    @api.constrains('project_id', 'task_id', 'issue_date', 'document_type_id')
-    def check_duplicate_document(self):
-        if self.env.context.get('bypass_duplicate_check'):
-            return
-        for rec in self:
-            domain = [
-                ('document_type_id', '=', rec.document_type_id.id),
-                ('issue_date', '=', rec.issue_date),
-                ('id', '!=', rec.id),
-            ]
-            if rec.project_id:
-                domain.append(('project_id', '=', rec.project_id.id))
-            if rec.task_id:
-                domain.append(('task_id', '=', rec.task_id.id))
-            
-            duplicate_document = self.search(domain)
-            if duplicate_document:
-                raise ValidationError(_("This document already exists!"))
+    # @api.constrains('project_id', 'task_id', 'issue_date', 'document_type_id')
+    # def check_duplicate_document(self):
+    #     if self.env.context.get('bypass_duplicate_check'):
+    #         return
+    #     for rec in self:
+    #         domain = [
+    #             ('document_type_id', '=', rec.document_type_id.id),
+    #             ('issue_date', '=', rec.issue_date),
+    #             ('id', '!=', rec.id),
+    #         ]
+    #         if rec.project_id:
+    #             domain.append(('project_id', '=', rec.project_id.id))
+    #         if rec.task_id:
+    #             domain.append(('task_id', '=', rec.task_id.id))
+    #         
+    #         duplicate_document = self.search(domain)
+    #         if duplicate_document:
+    #             raise ValidationError(_("This document already exists!"))
 
     def write(self, vals):
         res = super(ProjectDocumentTypeLine, self).write(vals)
@@ -172,24 +172,24 @@ class ProjectDocumentRequiredLine(models.Model):
                 vals['number'] = self.env['ir.sequence'].next_by_code('project.document.required.line') or _("New")
         return super(ProjectDocumentRequiredLine, self).create(vals_list)
 
-    @api.constrains('project_id', 'task_id', 'issue_date', 'document_type_id')
-    def check_duplicate_document(self):
-        if self.env.context.get('bypass_duplicate_check'):
-            return
-        for rec in self:
-            domain = [
-                ('document_type_id', '=', rec.document_type_id.id),
-                ('issue_date', '=', rec.issue_date),
-                ('id', '!=', rec.id),
-            ]
-            if rec.project_id:
-                domain.append(('project_id', '=', rec.project_id.id))
-            if rec.task_id:
-                domain.append(('task_id', '=', rec.task_id.id))
-            
-            duplicate_document = self.search(domain)
-            if duplicate_document:
-                raise ValidationError(_("This document already exists!"))
+    # @api.constrains('project_id', 'task_id', 'issue_date', 'document_type_id')
+    # def check_duplicate_document(self):
+    #     if self.env.context.get('bypass_duplicate_check'):
+    #         return
+    #     for rec in self:
+    #         domain = [
+    #             ('document_type_id', '=', rec.document_type_id.id),
+    #             ('issue_date', '=', rec.issue_date),
+    #             ('id', '!=', rec.id),
+    #         ]
+    #         if rec.project_id:
+    #             domain.append(('project_id', '=', rec.project_id.id))
+    #         if rec.task_id:
+    #             domain.append(('task_id', '=', rec.task_id.id))
+    #         
+    #         duplicate_document = self.search(domain)
+    #         if duplicate_document:
+    #             raise ValidationError(_("This document already exists!"))
 
     def write(self, vals):
         res = super(ProjectDocumentRequiredLine, self).write(vals)
@@ -226,6 +226,22 @@ class ProjectProject(models.Model):
         'project.document.required.line', 'project_id', string='Required Document Types')
     # sale_order_id field is inherited from sale_project, do not redefine
 
+    # --- Workflow checkboxes for Required Documents ---
+    required_document_complete = fields.Boolean(string="Required Document Complete", default=False)
+    required_document_confirm = fields.Boolean(string="Required Document Confirm", default=False)
+    required_document_update = fields.Boolean(string="Required Document Update", default=False)
+
+    # --- Workflow checkboxes for Deliverable Documents ---
+    deliverable_document_complete = fields.Boolean(string="Deliverable Document Complete", default=False)
+    deliverable_document_confirm = fields.Boolean(string="Deliverable Document Confirm", default=False)
+    deliverable_document_update = fields.Boolean(string="Deliverable Document Update", default=False)
+
+    # --- Project-specific fields ---
+    return_reason = fields.Text(string="Return Reason")
+    return_date = fields.Date(string="Return Date")
+    update_reason = fields.Text(string="Update Reason")
+    update_date = fields.Date(string="Update Date")
+
     @api.model_create_multi
     def create(self, vals_list):
         projects = super().create(vals_list)
@@ -241,6 +257,79 @@ class ProjectProject(models.Model):
             if product_templates:
                 copy_documents_from_product_to_project(self.env, project, product_templates)
         return projects
+
+    # --- Project-level document management methods ---
+    def action_complete_required_documents(self):
+        """Complete required documents for project"""
+        self.ensure_one()
+        self.required_document_complete = True
+        return True
+
+    def action_confirm_required_documents(self):
+        """Confirm required documents for project"""
+        self.ensure_one()
+        self.required_document_confirm = True
+        return True
+
+    def action_update_required_documents(self):
+        """Update required documents for project"""
+        self.ensure_one()
+        self.required_document_update = True
+        return True
+
+    def action_reset_required_document_complete(self):
+        """Reset required document complete status"""
+        self.ensure_one()
+        self.required_document_complete = False
+        return True
+
+    def action_reset_required_document_confirm(self):
+        """Reset required document confirm status"""
+        self.ensure_one()
+        self.required_document_confirm = False
+        return True
+
+    def action_reset_required_document_update(self):
+        """Reset required document update status"""
+        self.ensure_one()
+        self.required_document_update = False
+        return True
+
+    def action_complete_deliverable_documents(self):
+        """Complete deliverable documents for project"""
+        self.ensure_one()
+        self.deliverable_document_complete = True
+        return True
+
+    def action_confirm_deliverable_documents(self):
+        """Confirm deliverable documents for project"""
+        self.ensure_one()
+        self.deliverable_document_confirm = True
+        return True
+
+    def action_update_deliverable_documents(self):
+        """Update deliverable documents for project"""
+        self.ensure_one()
+        self.deliverable_document_update = True
+        return True
+
+    def action_reset_deliverable_document_complete(self):
+        """Reset deliverable document complete status"""
+        self.ensure_one()
+        self.deliverable_document_complete = False
+        return True
+
+    def action_reset_deliverable_document_confirm(self):
+        """Reset deliverable document confirm status"""
+        self.ensure_one()
+        self.deliverable_document_confirm = False
+        return True
+
+    def action_reset_deliverable_document_update(self):
+        """Reset deliverable document update status"""
+        self.ensure_one()
+        self.deliverable_document_update = False
+        return True
 
 class ProjectTask(models.Model):
     _inherit = 'project.task'

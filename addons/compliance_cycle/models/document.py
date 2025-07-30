@@ -15,12 +15,7 @@ class ComplianceDocumentLines(models.Model):
         string='Compliance',
         ondelete='cascade'
     )
-    document_type = fields.Selection([
-        ('passport', 'Passport'),
-        ('visa', 'Visa'),
-        ('license', 'License'),
-        ('other', 'Other')
-    ], string='Document Type', required=True)
+    document_type_id = fields.Many2one('project.document.type', string='Document Type', required=True)
     document_file = fields.Binary(string='Document File')
     document_filename = fields.Char(string='Document Filename')
     is_uploaded = fields.Boolean(string='Uploaded', default=False)
