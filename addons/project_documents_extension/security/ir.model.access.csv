@@ -13,6 +13,7 @@ reached.checkpoint,reached.checkpoint,model_reached_checkpoint,base.group_system
 task.checkpoint,task.checkpoint,model_task_checkpoint,base.group_user,1,0,0,0
 task.checkpoint,task.checkpoint,model_task_checkpoint,base.group_system,1,1,1,1
 access_document_upload_wizard_user,access.document.upload.wizard.user,model_document_upload_wizard,base.group_user,1,1,1,0
+access_duplicate_document_warning_wizard_user,duplicate.document.warning.wizard.user,model_duplicate_document_warning_wizard,base.group_user,1,1,1,0
 access_task_document_required_lines,task.document.required.lines,model_task_document_required_lines,base.group_user,1,1,1,1
 access_product_template_required_documents,product.template.required.documents,model_product_template_required_documents,base.group_user,1,1,1,1
 access_checkpoint_history,checkpoint.history,model_checkpoint_history,base.group_user,1,1,1,1

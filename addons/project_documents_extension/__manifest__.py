@@ -20,6 +20,7 @@
         'data/data.xml',
         'data/test_project_documents.xml',
         'wizard/document_upload_wizard.xml',
+        'wizard/duplicate_document_warning_wizard.xml',
     ],
     'installable': True,
     'application': False,
