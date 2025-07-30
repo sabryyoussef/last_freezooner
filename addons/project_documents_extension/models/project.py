@@ -685,13 +685,6 @@ class ProjectProject(models.Model):
         'project.document.required.line', 'project_id', string='Required Document Types')
     # sale_order_id field is inherited from sale_project, do not redefine
 
-    # Temporarily disable project-level document fields due to disabled models
-    # # --- NEW PROJECT-LEVEL DOCUMENT FIELDS ---
-    # project_required_document_ids = fields.One2many(
-    #     'project.level.required.document', 'project_id', string='Project Required Documents')
-    # project_deliverable_document_ids = fields.One2many(
-    #     'project.level.deliverable.document', 'project_id', string='Project Deliverable Documents')
-
     # --- Workflow checkboxes for Required Documents ---
     required_document_complete = fields.Boolean(string="Required Document Complete", default=False)
     required_document_confirm = fields.Boolean(string="Required Document Confirm", default=False)
@@ -976,6 +969,153 @@ class ProjectProject(models.Model):
         """Reset compliance update status"""
         self.ensure_one()
         self.is_update_compliance = False
+        return True
+
+    # --- Partner Fields Workflow Methods ---
+    def action_complete_partner_fields(self):
+        """Complete partner fields workflow"""
+        self.ensure_one()
+        self.is_complete_partner_fields = True
+        self.message_post(body="✅ Partner fields marked as complete")
+        return True
+
+    def action_confirm_partner_fields(self):
+        """Confirm partner fields workflow"""
+        self.ensure_one()
+        self.is_confirm_partner_fields = True
+        self.message_post(body="✅ Partner fields completion confirmed")
+        return True
+
+    def action_complete_return_partner_fields(self):
+        """Complete return partner fields workflow"""
+        self.ensure_one()
+        self.is_complete_return_partner_fields = True
+        self.message_post(body="✅ Partner fields return completed")
+        return True
+
+    def action_update_partner_fields(self):
+        """Update partner fields workflow"""
+        self.ensure_one()
+        self.is_update_partner_fields = True
+        self.message_post(body="🔄 Partner fields marked for update")
+        return True
+
+    def action_reset_partner_fields_complete(self):
+        """Reset partner fields complete status"""
+        self.ensure_one()
+        self.is_complete_partner_fields = False
+        return True
+
+    def action_reset_partner_fields_confirm(self):
+        """Reset partner fields confirm status"""
+        self.ensure_one()
+        self.is_confirm_partner_fields = False
+        return True
+
+    def action_reset_partner_fields_return(self):
+        """Reset partner fields return status"""
+        self.ensure_one()
+        self.is_complete_return_partner_fields = False
+        return True
+
+    def action_reset_partner_fields_update(self):
+        """Reset partner fields update status"""
+        self.ensure_one()
+        self.is_update_partner_fields = False
+        return True
+
+    # --- Project Return/Update Actions ---
+    def action_project_return(self):
+        """Open project return form"""
+        self.ensure_one()
+        return {
+            'name': _('Return Project'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'project.project',
+            'view_mode': 'form',
+            'view_id': self.env.ref('project_documents_extension.project_return_form_view').id,
+            'target': 'new',
+            'context': {
+                'default_id': self.id,
+                'default_name': self.name,
+                'default_partner_id': self.partner_id.id if self.partner_id else False,
+            }
+        }
+
+    def action_project_update(self):
+        """Open project update form"""
+        self.ensure_one()
+        return {
+            'name': _('Update Project Fields'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'project.project',
+            'view_mode': 'form',
+            'view_id': self.env.ref('project_documents_extension.project_update_fields_form_view').id,
+            'target': 'new',
+            'context': {
+                'default_id': self.id,
+                'default_name': self.name,
+                'default_partner_id': self.partner_id.id if self.partner_id else False,
+            }
+        }
+
+    def action_process_project_return(self):
+        """Process project return - called when return form is saved"""
+        self.ensure_one()
+        if self.return_reason:
+            # Update project status
+            self.write({
+                'active': False,  # Archive the project
+                'return_date': fields.Date.today() if not self.return_date else self.return_date,
+            })
+            
+            # Post message to project chatter
+            return_message = _("🔄 Project Returned\n\n")
+            return_message += _("📅 Return Date: %s\n") % (self.return_date or fields.Date.today())
+            return_message += _("📝 Return Reason: %s\n") % self.return_reason
+            return_message += _("👤 Returned By: %s") % self.env.user.name
+            
+            self.message_post(body=return_message)
+            
+            # Simple notification without mail.channel
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Project Returned'),
+                    'message': _('Project "%s" has been successfully returned.') % self.name,
+                    'type': 'success',
+                }
+            }
+        return True
+
+    def action_process_project_update(self):
+        """Process project update - called when update form is saved"""
+        self.ensure_one()
+        if self.update_reason:
+            # Update project
+            self.write({
+                'update_date': fields.Date.today() if not self.update_date else self.update_date,
+            })
+            
+            # Post message to project chatter
+            update_message = _("📝 Project Updated\n\n")
+            update_message += _("📅 Update Date: %s\n") % (self.update_date or fields.Date.today())
+            update_message += _("📝 Update Reason: %s\n") % self.update_reason
+            update_message += _("👤 Updated By: %s") % self.env.user.name
+            
+            self.message_post(body=update_message)
+            
+            # Simple notification
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Project Updated'),
+                    'message': _('Project "%s" has been successfully updated.') % self.name,
+                    'type': 'success',
+                }
+            }
         return True
 
 
