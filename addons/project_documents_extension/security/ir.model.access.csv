@@ -3,6 +3,7 @@ access_project_document_required_line,project_document_required_line,model_proje
 access_project_document_type_line,project_document_type_line,model_project_document_type_line,,1,1,1,1
 access_project_document_category,project_document_category,model_project_document_category,,1,1,1,1
 access_project_document_type,project_document_type,model_project_document_type,,1,1,1,1
+access_project_res_partner_fields,project_res_partner_fields,model_project_res_partner_fields,,1,1,1,1
 access_product_task_template,product_task_template,model_product_task_template,,1,1,1,1
 access_product_subtask_template,product_subtask_template,model_product_subtask_template,,1,1,1,1
 product.task.template.checkpoint,product.task.template.checkpoint,model_product_task_template_checkpoint,base.group_user,1,0,0,0

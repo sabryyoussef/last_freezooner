@@ -43,8 +43,15 @@ class ProductSubtaskTemplate(models.Model):
 class ReachedCheckpoint(models.Model):
     _name = 'reached.checkpoint'
     _description = 'Reached Checkpoint'
+    _rec_name = 'name'
 
     name = fields.Char(string='Checkpoint Name', required=True)
+    record_name = fields.Char(string='Record Name', compute='_compute_record_name', store=True)
+
+    @api.depends('name')
+    def _compute_record_name(self):
+        for record in self:
+            record.record_name = record.name or ''
 
 class ProductTaskTemplateCheckpoint(models.Model):
     _name = 'product.task.template.checkpoint'
