@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Legal Entity Type Views -->
+        <record id="view_legal_entity_type_form" model="ir.ui.view">
+            <field name="name">legal.entity.type.form</field>
+            <field name="model">legal.entity.type</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Legal Entity Type">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="sequence"/>
+                                <field name="is_active"/>
+                            </group>
+                            <group>
+                                <field name="description"/>
+                                <field name="requirements"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_legal_entity_type_tree" model="ir.ui.view">
+            <field name="name">legal.entity.type.tree</field>
+            <field name="model">legal.entity.type</field>
+            <field name="type">list</field>
+            <field name="arch" type="xml">
+                <list string="Legal Entity Types">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="is_active"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_legal_entity_type_search" model="ir.ui.view">
+            <field name="name">legal.entity.type.search</field>
+            <field name="model">legal.entity.type</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Legal Entity Types">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <filter string="Active" name="active" domain="[('is_active', '=', True)]"/>
+                    <filter string="Inactive" name="inactive" domain="[('is_active', '=', False)]"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Partner Hand Type Views -->
+        <record id="view_partner_hand_type_form" model="ir.ui.view">
+            <field name="name">partner.hand.type.form</field>
+            <field name="model">partner.hand.type</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Partner Hand Type">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="sequence"/>
+                                <field name="is_active"/>
+                            </group>
+                            <group>
+                                <field name="description"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_partner_hand_type_tree" model="ir.ui.view">
+            <field name="name">partner.hand.type.tree</field>
+            <field name="model">partner.hand.type</field>
+            <field name="type">list</field>
+            <field name="arch" type="xml">
+                <list string="Partner Hand Types">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="is_active"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_partner_hand_type_search" model="ir.ui.view">
+            <field name="name">partner.hand.type.search</field>
+            <field name="model">partner.hand.type</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Partner Hand Types">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <filter string="Active" name="active" domain="[('is_active', '=', True)]"/>
+                    <filter string="Inactive" name="inactive" domain="[('is_active', '=', False)]"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Enhanced Project Partner Fields View -->
+        <record id="view_project_partner_fields_form_enhanced" model="ir.ui.view">
+            <field name="name">project.res.partner.fields.form.enhanced</field>
+            <field name="model">project.res.partner.fields</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Project Partner Field">
+                    <sheet>
+                        <group>
+                            <group string="Basic Information">
+                                <field name="project_id"/>
+                                <field name="partner_id"/>
+                                <field name="field_id"/>
+                                <field name="field_type"/>
+                                <field name="is_required"/>
+                            </group>
+                            <group string="Legal Entity &amp; Hand Management">
+                                <field name="legal_entity_type_id"/>
+                                <field name="hand_type_id"/>
+                                <field name="state_id"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Enhanced Partner Information">
+                                <field name="trade_license_number"/>
+                                <field name="establishment_card_number"/>
+                                <field name="visa_number"/>
+                                <field name="emirates_id"/>
+                                <field name="passport_number"/>
+                            </group>
+                            <group string="Status &amp; Verification">
+                                <field name="is_verified"/>
+                                <field name="verification_date"/>
+                                <field name="verified_by"/>
+                                <field name="is_line_readonly"/>
+                            </group>
+                        </group>
+                        <group string="Field Values">
+                            <field name="current_value"/>
+                            <field name="update_value"/>
+                        </group>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_verify_partner" type="object" string="Verify Partner" 
+                                    class="btn-primary" invisible="is_verified"/>
+                            <button name="action_unverify_partner" type="object" string="Unverify Partner" 
+                                    class="btn-warning" invisible="not is_verified"/>
+                            <button name="action_validate_legal_entity" type="object" string="Validate Legal Entity" 
+                                    class="btn-secondary"/>
+                            <button name="action_validate_hand_type" type="object" string="Validate Hand Type" 
+                                    class="btn-secondary"/>
+                            <button name="action_update_field" type="object" string="Update Field" 
+                                    class="btn-success"/>
+                            <button name="action_reset" type="object" string="Reset" 
+                                    class="btn-link"/>
+                            <button name="action_retain_value" type="object" string="Retain Value" 
+                                    class="btn-link"/>
+                        </div>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <record id="action_legal_entity_type" model="ir.actions.act_window">
+            <field name="name">Legal Entity Types</field>
+            <field name="res_model">legal.entity.type</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first legal entity type!
+                </p>
+            </field>
+        </record>
+
+        <record id="action_partner_hand_type" model="ir.actions.act_window">
+            <field name="name">Partner Hand Types</field>
+            <field name="res_model">partner.hand.type</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create your first partner hand type!
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu Items -->
+        <menuitem id="menu_legal_entity_types"
+                  name="Legal Entity Types"
+                  parent="project.menu_main_pm"
+                  action="action_legal_entity_type"
+                  sequence="50"/>
+
+        <menuitem id="menu_partner_hand_types"
+                  name="Partner Hand Types"
+                  parent="project.menu_main_pm"
+                  action="action_partner_hand_type"
+                  sequence="51"/>
+    </data>
+</odoo> 

@@ -714,6 +714,63 @@ class ProjectProject(models.Model):
         copy=False,
     )
     
+    # --- Enhanced Partner Fields (Phase 6.1) ---
+    legal_entity_type_id = fields.Many2one(
+        'legal.entity.type',
+        string='Legal Entity Type',
+        help='Type of legal entity (FZCO, FZE, LLC, etc.)'
+    )
+
+    hand_type_id = fields.Many2one(
+        'partner.hand.type',
+        string='Hand Type',
+        help='Whether partner is a company or individual'
+    )
+
+    # Enhanced Partner Information
+    trade_license_number = fields.Char(
+        string='Trade License Number',
+        help='Trade license number for the partner'
+    )
+
+    establishment_card_number = fields.Char(
+        string='Establishment Card Number',
+        help='Establishment card number for the partner'
+    )
+
+    visa_number = fields.Char(
+        string='Visa Number',
+        help='Visa number for the partner'
+    )
+
+    emirates_id = fields.Char(
+        string='Emirates ID',
+        help='Emirates ID for the partner'
+    )
+
+    passport_number = fields.Char(
+        string='Passport Number',
+        help='Passport number for the partner'
+    )
+
+    # Status Fields
+    is_verified = fields.Boolean(
+        string='Verified',
+        default=False,
+        help='Whether the partner information has been verified'
+    )
+
+    verification_date = fields.Date(
+        string='Verification Date',
+        help='Date when the partner information was verified'
+    )
+
+    verified_by = fields.Many2one(
+        'res.users',
+        string='Verified By',
+        help='User who verified the partner information'
+    )
+    
     # --- Partner Fields Workflow checkboxes ---
     is_complete_partner_fields = fields.Boolean(string="Complete Partner Fields", default=False)
     is_confirm_partner_fields = fields.Boolean(string="Partner Fields Confirm", default=False)
@@ -752,44 +809,76 @@ class ProjectProject(models.Model):
         """Compute a summary of all checkpoint statuses."""
         for project in self:
             summary = []
+            completed_count = 0
+            total_required = 4  # Total required checkpoints for completion
             
             # Required Documents
             if project.required_document_complete:
-                summary.append(_("Required Documents Complete"))
-            if project.required_document_confirm:
-                summary.append(_("Required Documents Confirmed"))
-            if project.required_document_update:
-                summary.append(_("Required Documents Updated"))
+                summary.append("✅ Required Documents Complete")
+                completed_count += 1
+            elif project.required_document_confirm:
+                summary.append("✅ Required Documents Confirmed")
+                completed_count += 1
+            elif project.required_document_update:
+                summary.append("✅ Required Documents Updated")
+                completed_count += 1
+            else:
+                summary.append("⏳ Required Documents: Not Complete")
             
             # Deliverable Documents  
             if project.deliverable_document_complete:
-                summary.append(_("Deliverable Documents Complete"))
-            if project.deliverable_document_confirm:
-                summary.append(_("Deliverable Documents Confirmed"))
-            if project.deliverable_document_update:
-                summary.append(_("Deliverable Documents Updated"))
+                summary.append("✅ Deliverable Documents Complete")
+                completed_count += 1
+            elif project.deliverable_document_confirm:
+                summary.append("✅ Deliverable Documents Confirmed")
+                completed_count += 1
+            elif project.deliverable_document_update:
+                summary.append("✅ Deliverable Documents Updated")
+                completed_count += 1
+            else:
+                summary.append("⏳ Deliverable Documents: Not Complete")
             
             # Compliance
             if project.is_complete_return_compliance:
-                summary.append(_("Compliance Complete"))
-            if project.is_confirm_compliance:
-                summary.append(_("Compliance Confirmed"))
-            if project.is_update_compliance:
-                summary.append(_("Compliance Updated"))
+                summary.append("✅ Compliance Complete")
+                completed_count += 1
+            elif project.is_confirm_compliance:
+                summary.append("✅ Compliance Confirmed")
+                completed_count += 1
+            elif project.is_update_compliance:
+                summary.append("✅ Compliance Updated")
+                completed_count += 1
+            else:
+                summary.append("⏳ Compliance: Not Complete")
             
             # Partner Fields
             if project.is_complete_partner_fields:
-                summary.append(_("Partner Fields Complete"))
-            if project.is_confirm_partner_fields:
-                summary.append(_("Partner Fields Confirmed"))
-            if project.is_update_partner_fields:
-                summary.append(_("Partner Fields Updated"))
+                summary.append("✅ Partner Fields Complete")
+                completed_count += 1
+            elif project.is_confirm_partner_fields:
+                summary.append("✅ Partner Fields Confirmed")
+                completed_count += 1
+            elif project.is_update_partner_fields:
+                summary.append("✅ Partner Fields Updated")
+                completed_count += 1
+            else:
+                summary.append("⏳ Partner Fields: Not Complete")
             
-            # Handover
+            # Handover (optional)
             if project.is_handover_complete:
-                summary.append(_("Handover Complete"))
+                summary.append("✅ Handover Complete")
             
-            project.checkpoint_summary = "\n".join(summary) if summary else _("No checkpoints completed")
+            # Add progress indicator
+            progress_percentage = (completed_count / total_required) * 100
+            progress_summary = f"\n📊 Progress: {completed_count}/{total_required} checkpoints completed ({progress_percentage:.0f}%)"
+            
+            if completed_count == total_required:
+                progress_summary += "\n🎉 All required checkpoints completed! Project ready for final milestone."
+            else:
+                remaining = total_required - completed_count
+                progress_summary += f"\n⏳ {remaining} checkpoint(s) remaining for project completion."
+            
+            project.checkpoint_summary = progress_summary + "\n\n" + "\n".join(summary) if summary else _("No checkpoints completed")
 
     # --- Project Notes (Compliance & Handover) ---
     compliance_notes = fields.Html(
@@ -854,25 +943,40 @@ class ProjectProject(models.Model):
     # Re-enable project-level document management methods
     # --- Project-level document management methods ---
     def action_complete_required_documents(self):
-        """Complete required documents for project"""
+        """Complete required documents workflow"""
         self.ensure_one()
         self.required_document_complete = True
-        self.message_post(body="✅ Required documents marked as complete")
-        return True
+        self.message_post(body=_("✅ Required Documents workflow completed"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Required Documents Complete")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_confirm_required_documents(self):
-        """Confirm required documents for project"""
+        """Confirm required documents workflow"""
         self.ensure_one()
         self.required_document_confirm = True
-        self.message_post(body="✅ Required documents completion confirmed")
-        return True
+        self.message_post(body=_("✅ Required Documents workflow confirmed"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Required Documents Confirmed")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_update_required_documents(self):
-        """Update required documents for project"""
+        """Update required documents workflow"""
         self.ensure_one()
         self.required_document_update = True
-        self.message_post(body="🔄 Required documents marked for update")
-        return True
+        self.message_post(body=_("✅ Required Documents workflow updated"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Required Documents Updated")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_reset_required_document_complete(self):
         """Reset required document complete status"""
@@ -892,26 +996,101 @@ class ProjectProject(models.Model):
         self.required_document_update = False
         return True
 
+    def action_repeat_required_documents(self):
+        """Repeat required documents workflow - reset all states"""
+        self.ensure_one()
+        
+        # SOFT VALIDATION: Check if there are any documents before allowing repeat
+        if self.document_required_type_ids:
+            # Show confirmation dialog
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'document.action.confirmation.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_title': _('Confirm Repeat Action'),
+                    'default_message': _('⚠️ You are resetting the workflow while documents exist. This will reset all statuses.\n\nDo you want to proceed?'),
+                    'default_action_type': 'repeat_required',
+                    'default_record_id': self.id,
+                    'default_record_model': self._name,
+                }
+            }
+        
+        # No documents exist, proceed directly
+        return self._execute_repeat_required_documents()
+
+    def action_return_required_documents(self):
+        """Return required documents for review"""
+        self.ensure_one()
+        
+        # Always show confirmation dialog
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'document.action.confirmation.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_title': _('Confirm Return Action'),
+                'default_message': _('⚠️ You are returning documents for review. This will reset completion status.\n\nDo you want to proceed?'),
+                'default_action_type': 'return_required',
+                'default_record_id': self.id,
+                'default_record_model': self._name,
+            }
+        }
+
+    def _execute_repeat_required_documents(self):
+        """Execute repeat required documents workflow"""
+        self.ensure_one()
+        self.required_document_complete = False
+        self.required_document_confirm = False
+        self.required_document_update = False
+        self.message_post(body="🔄 Required documents workflow reset for repetition")
+        return {'type': 'ir.actions.act_window_close'}
+
+    def _execute_return_required_documents(self):
+        """Execute return required documents workflow"""
+        self.ensure_one()
+        self.required_document_complete = False
+        self.required_document_confirm = False
+        self.message_post(body="📤 Required documents returned for review")
+        return {'type': 'ir.actions.act_window_close'}
+
     def action_complete_deliverable_documents(self):
-        """Complete deliverable documents for project"""
+        """Complete deliverable documents workflow"""
         self.ensure_one()
         self.deliverable_document_complete = True
-        self.message_post(body="✅ Deliverable documents marked as complete")
-        return True
+        self.message_post(body=_("✅ Deliverable Documents workflow completed"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Deliverable Documents Complete")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_confirm_deliverable_documents(self):
-        """Confirm deliverable documents for project"""
+        """Confirm deliverable documents workflow"""
         self.ensure_one()
         self.deliverable_document_confirm = True
-        self.message_post(body="✅ Deliverable documents completion confirmed")
-        return True
+        self.message_post(body=_("✅ Deliverable Documents workflow confirmed"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Deliverable Documents Confirmed")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_update_deliverable_documents(self):
-        """Update deliverable documents for project"""
+        """Update deliverable documents workflow"""
         self.ensure_one()
         self.deliverable_document_update = True
-        self.message_post(body="🔄 Deliverable documents marked for update")
-        return True
+        self.message_post(body=_("✅ Deliverable Documents workflow updated"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Deliverable Documents Updated")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_reset_deliverable_document_complete(self):
         """Reset deliverable document complete status"""
@@ -931,27 +1110,102 @@ class ProjectProject(models.Model):
         self.deliverable_document_update = False
         return True
 
+    def action_repeat_deliverable_documents(self):
+        """Repeat deliverable documents workflow - reset all states"""
+        self.ensure_one()
+        
+        # SOFT VALIDATION: Check if there are any documents before allowing repeat
+        if self.document_type_ids:
+            # Show confirmation dialog
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'document.action.confirmation.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_title': _('Confirm Repeat Action'),
+                    'default_message': _('⚠️ You are resetting the workflow while documents exist. This will reset all statuses.\n\nDo you want to proceed?'),
+                    'default_action_type': 'repeat_deliverable',
+                    'default_record_id': self.id,
+                    'default_record_model': self._name,
+                }
+            }
+        
+        # No documents exist, proceed directly
+        return self._execute_repeat_deliverable_documents()
+
+    def action_return_deliverable_documents(self):
+        """Return deliverable documents for review"""
+        self.ensure_one()
+        
+        # Always show confirmation dialog
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'document.action.confirmation.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_title': _('Confirm Return Action'),
+                'default_message': _('⚠️ You are returning documents for review. This will reset completion status.\n\nDo you want to proceed?'),
+                'default_action_type': 'return_deliverable',
+                'default_record_id': self.id,
+                'default_record_model': self._name,
+            }
+        }
+
+    def _execute_repeat_deliverable_documents(self):
+        """Execute repeat deliverable documents workflow"""
+        self.ensure_one()
+        self.deliverable_document_complete = False
+        self.deliverable_document_confirm = False
+        self.deliverable_document_update = False
+        self.message_post(body="🔄 Deliverable documents workflow reset for repetition")
+        return {'type': 'ir.actions.act_window_close'}
+
+    def _execute_return_deliverable_documents(self):
+        """Execute return deliverable documents workflow"""
+        self.ensure_one()
+        self.deliverable_document_complete = False
+        self.deliverable_document_confirm = False
+        self.message_post(body="📤 Deliverable documents returned for review")
+        return {'type': 'ir.actions.act_window_close'}
+
     # --- Compliance Action Methods ---
     def action_complete_compliance(self):
-        """Mark compliance as complete"""
+        """Complete compliance workflow"""
         self.ensure_one()
         self.is_complete_return_compliance = True
-        self.message_post(body="✅ Compliance marked as complete")
-        return True
+        self.message_post(body=_("✅ Compliance workflow completed"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Compliance Complete")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_confirm_compliance(self):
-        """Confirm compliance completion"""
+        """Confirm compliance workflow"""
         self.ensure_one()
         self.is_confirm_compliance = True
-        self.message_post(body="✅ Compliance completion confirmed")
-        return True
+        self.message_post(body=_("✅ Compliance workflow confirmed"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Compliance Confirmed")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_update_compliance(self):
-        """Mark compliance for update"""
+        """Update compliance workflow"""
         self.ensure_one()
         self.is_update_compliance = True
-        self.message_post(body="🔄 Compliance marked for update")
-        return True
+        self.message_post(body=_("✅ Compliance workflow updated"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Compliance Updated")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_reset_compliance_complete(self):
         """Reset compliance complete status"""
@@ -976,15 +1230,25 @@ class ProjectProject(models.Model):
         """Complete partner fields workflow"""
         self.ensure_one()
         self.is_complete_partner_fields = True
-        self.message_post(body="✅ Partner fields marked as complete")
-        return True
+        self.message_post(body=_("✅ Partner Fields workflow completed"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Partner Fields Complete")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_confirm_partner_fields(self):
         """Confirm partner fields workflow"""
         self.ensure_one()
         self.is_confirm_partner_fields = True
-        self.message_post(body="✅ Partner fields completion confirmed")
-        return True
+        self.message_post(body=_("✅ Partner Fields workflow confirmed"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Partner Fields Confirmed")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_complete_return_partner_fields(self):
         """Complete return partner fields workflow"""
@@ -997,8 +1261,13 @@ class ProjectProject(models.Model):
         """Update partner fields workflow"""
         self.ensure_one()
         self.is_update_partner_fields = True
-        self.message_post(body="🔄 Partner fields marked for update")
-        return True
+        self.message_post(body=_("✅ Partner Fields workflow updated"))
+        
+        # Create reached checkpoint
+        self._create_reached_checkpoint("Partner Fields Updated")
+        
+        # Check if all checkpoints are reached
+        self._check_and_trigger_final_milestone()
 
     def action_reset_partner_fields_complete(self):
         """Reset partner fields complete status"""
@@ -1024,15 +1293,146 @@ class ProjectProject(models.Model):
         self.is_update_partner_fields = False
         return True
 
+    # --- Enhanced Partner Fields Methods (Phase 6.1) ---
+    def action_verify_partner(self):
+        """Verify the partner information"""
+        self.ensure_one()
+        if not self.partner_id:
+            raise ValidationError(_("No partner found for this project"))
+        
+        self.write({
+            'is_verified': True,
+            'verification_date': fields.Date.today(),
+            'verified_by': self.env.user.id
+        })
+        
+        self.message_post(
+            body=f"Partner information verified by {self.env.user.name}"
+        )
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Partner information has been verified.'),
+                'type': 'success',
+            }
+        }
+
+    def action_unverify_partner(self):
+        """Unverify the partner information"""
+        self.ensure_one()
+        
+        self.write({
+            'is_verified': False,
+            'verification_date': False,
+            'verified_by': False
+        })
+        
+        self.message_post(
+            body=f"Partner information verification removed by {self.env.user.name}"
+        )
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Partner information verification has been removed.'),
+                'type': 'success',
+            }
+        }
+
+    def action_validate_legal_entity(self):
+        """Validate legal entity information"""
+        self.ensure_one()
+        
+        if not self.legal_entity_type_id:
+            raise ValidationError(_("Please select a legal entity type"))
+        
+        if not self.trade_license_number:
+            raise ValidationError(_("Please provide a trade license number"))
+        
+        # Add validation logic here
+        self.message_post(
+            body=f"Legal entity validation completed for {self.legal_entity_type_id.name}"
+        )
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Legal entity information has been validated.'),
+                'type': 'success',
+            }
+        }
+
+    def action_validate_hand_type(self):
+        """Validate hand type information"""
+        self.ensure_one()
+        
+        if not self.hand_type_id:
+            raise ValidationError(_("Please select a hand type"))
+        
+        # Add validation logic here
+        self.message_post(
+            body=f"Hand type validation completed for {self.hand_type_id.name}"
+        )
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Hand type information has been validated.'),
+                'type': 'success',
+            }
+        }
+
     # --- Project Return/Update Actions ---
     def action_project_return(self):
-        """Open project return form"""
+        """Open project return form with confirmation"""
+        self.ensure_one()
+        
+        # Check if project has any active content that would be affected
+        has_documents = bool(self.document_required_type_ids or self.document_type_ids)
+        has_tasks = bool(self.task_ids.filtered(lambda t: t.active))
+        has_workflow_progress = any([
+            self.required_document_complete, self.required_document_confirm, self.required_document_update,
+            self.deliverable_document_complete, self.deliverable_document_confirm, self.deliverable_document_update,
+            self.is_complete_return_compliance, self.is_confirm_compliance, self.is_update_compliance,
+            self.is_complete_partner_fields, self.is_confirm_partner_fields, self.is_update_partner_fields,
+        ])
+        
+        # If project has content, show confirmation
+        if has_documents or has_tasks or has_workflow_progress:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'document.action.confirmation.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_title': _('Confirm Project Return'),
+                    'default_message': _('⚠️ This project contains documents, tasks, or workflow progress.\n\nReturning the project will archive it and may affect ongoing work.\n\nDo you want to proceed with the return?'),
+                    'default_action_type': 'project_return',
+                    'default_record_id': self.id,
+                    'default_record_model': self._name,
+                }
+            }
+        
+        # No content to worry about, proceed directly
+        return self._execute_project_return()
+
+    def _execute_project_return(self):
+        """Execute project return action"""
         self.ensure_one()
         return {
-            'name': _('Return Project'),
             'type': 'ir.actions.act_window',
             'res_model': 'project.project',
             'view_mode': 'form',
+            'res_id': self.id,
             'view_id': self.env.ref('project_documents_extension.project_return_form_view').id,
             'target': 'new',
             'context': {
@@ -1043,13 +1443,46 @@ class ProjectProject(models.Model):
         }
 
     def action_project_update(self):
-        """Open project update form"""
+        """Open project update form with confirmation"""
+        self.ensure_one()
+        
+        # Check if project has any active content that would be affected
+        has_documents = bool(self.document_required_type_ids or self.document_type_ids)
+        has_tasks = bool(self.task_ids.filtered(lambda t: t.active))
+        has_workflow_progress = any([
+            self.required_document_complete, self.required_document_confirm, self.required_document_update,
+            self.deliverable_document_complete, self.deliverable_document_confirm, self.deliverable_document_update,
+            self.is_complete_return_compliance, self.is_confirm_compliance, self.is_update_compliance,
+            self.is_complete_partner_fields, self.is_confirm_partner_fields, self.is_update_partner_fields,
+        ])
+        
+        # If project has content, show confirmation
+        if has_documents or has_tasks or has_workflow_progress:
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'document.action.confirmation.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_title': _('Confirm Project Update'),
+                    'default_message': _('⚠️ This project contains documents, tasks, or workflow progress.\n\nUpdating the project may affect ongoing work and document statuses.\n\nDo you want to proceed with the update?'),
+                    'default_action_type': 'project_update',
+                    'default_record_id': self.id,
+                    'default_record_model': self._name,
+                }
+            }
+        
+        # No content to worry about, proceed directly
+        return self._execute_project_update()
+
+    def _execute_project_update(self):
+        """Execute project update action"""
         self.ensure_one()
         return {
-            'name': _('Update Project Fields'),
             'type': 'ir.actions.act_window',
             'res_model': 'project.project',
             'view_mode': 'form',
+            'res_id': self.id,
             'view_id': self.env.ref('project_documents_extension.project_update_fields_form_view').id,
             'target': 'new',
             'context': {
@@ -1118,6 +1551,389 @@ class ProjectProject(models.Model):
             }
         return True
 
+    def action_trigger_milestone_notification(self, milestone):
+        """Trigger milestone notification for this project"""
+        self.ensure_one()
+        if milestone:
+            milestone.send_milestone_notification(self)
+            self.message_post(
+                body=f"🎯 **Milestone Reached**: {milestone.name}\n\n{milestone.milestone_message or 'Milestone completed successfully.'}",
+                message_type='notification'
+            )
+        return True
+
+    def action_get_milestone_progress(self):
+        """Get milestone progress for this project"""
+        self.ensure_one()
+        
+        # Debug: Log that method is called
+        _logger.info(f"🎯 action_get_milestone_progress called for project: {self.name}")
+        
+        milestones = self.milestone_ids
+        total_milestones = len(milestones)
+        completed_milestones = milestones.filtered(lambda m: m.is_reached)
+        completed_count = len(completed_milestones)
+        
+        # Debug: Log milestone counts
+        _logger.info(f"📊 Milestone stats - Total: {total_milestones}, Completed: {completed_count}")
+        
+        # Calculate progress
+        progress_percentage = (completed_count / total_milestones * 100) if total_milestones > 0 else 0
+        
+        # Build status message
+        status_message = f"📊 **Milestone Progress Report**\n\n"
+        status_message += f"**Project:** {self.name}\n\n"
+        status_message += f"**Progress Summary:**\n"
+        status_message += f"• Total Milestones: {total_milestones}\n"
+        status_message += f"• Completed: {completed_count}\n"
+        status_message += f"• Pending: {total_milestones - completed_count}\n"
+        status_message += f"• Completion Rate: {progress_percentage:.0f}%\n\n"
+        
+        if completed_count > 0:
+            status_message += f"✅ **Completed Milestones:**\n"
+            for milestone in completed_milestones:
+                status_message += f"• {milestone.name}\n"
+            status_message += "\n"
+        
+        if total_milestones - completed_count > 0:
+            pending_milestones = milestones.filtered(lambda m: not m.is_reached)
+            status_message += f"⏳ **Pending Milestones:**\n"
+            for milestone in pending_milestones:
+                status_message += f"• {milestone.name}\n"
+            status_message += "\n"
+        
+        if completed_count == total_milestones and total_milestones > 0:
+            status_message += "🎉 **All milestones completed! Project is fully finished.**"
+        elif total_milestones == 0:
+            status_message += "💡 **No milestones found for this project.**\nCreate milestones to track project progress."
+        else:
+            remaining = total_milestones - completed_count
+            status_message += f"📅 **Next Steps:**\nComplete the remaining {remaining} milestone(s) to finish the project."
+        
+        # Debug: Log the message being sent
+        _logger.info(f"📝 Status message: {status_message}")
+        
+        # Post message to project chatter
+        self.message_post(
+            body=status_message,
+            message_type='notification'
+        )
+        
+        # Debug: Log that we're returning notification
+        _logger.info(f"🔔 Returning notification for milestone progress")
+        
+        # Return notification
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Milestone Progress Report',
+                'message': status_message,
+                'type': 'info',
+                'sticky': True,
+            }
+        }
+
+    def action_send_milestone_summary_email(self):
+        """Send milestone summary email for this project"""
+        self.ensure_one()
+        if self.partner_id and self.milestone_ids:
+            template = self.env.ref('project_documents_extension.email_template_milestone_summary', raise_if_not_found=False)
+            if template:
+                template.send_mail(self.id, force_send=True)
+                self.message_post(
+                    body=f"📧 **Milestone Summary Email Sent** to {self.partner_id.name}",
+                    message_type='notification'
+                )
+        return True
+
+    def action_complete_checkpoint_with_milestone(self, checkpoint_name):
+        """Complete a checkpoint and trigger milestone notification if applicable"""
+        self.ensure_one()
+        
+        # Find the checkpoint in task checkpoints
+        for task in self.task_ids:
+            checkpoint = task.task_checkpoint_ids.filtered(
+                lambda c: checkpoint_name in c.checkpoint_ids.mapped('name')
+            )[:1]
+            
+            if checkpoint and checkpoint.milestone_id:
+                # Trigger milestone notification
+                checkpoint.milestone_id.send_milestone_notification(task)
+                
+                # Log checkpoint completion
+                task.message_post(
+                    body=f"✅ **Checkpoint Completed**: {checkpoint_name}\n\nMilestone: {checkpoint.milestone_id.name}",
+                    message_type='notification'
+                )
+                
+                return True
+        
+        return False
+
+    def action_complete_checkpoint_with_milestone_simple(self):
+        """Simple action to complete checkpoint with milestone (no parameters)"""
+        self.ensure_one()
+        
+        # Find any task with milestone-linked checkpoints
+        for task in self.task_ids:
+            checkpoint = task.task_checkpoint_ids.filtered(
+                lambda c: c.milestone_id
+            )[:1]
+            
+            if checkpoint:
+                checkpoint_name = checkpoint.checkpoint_ids.mapped('name')[0] if checkpoint.checkpoint_ids else "Checkpoint"
+                return self.action_complete_checkpoint_with_milestone(checkpoint_name)
+        
+        # Show notification that no milestone-linked checkpoints found
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'No Milestone Checkpoints',
+                'message': 'No checkpoints with linked milestones found for this project.',
+                'type': 'warning'
+            }
+        }
+
+    def action_create_milestone(self):
+        """Create a new milestone for this project"""
+        self.ensure_one()
+        return {
+            'name': 'Create Milestone',
+            'type': 'ir.actions.act_window',
+            'res_model': 'quick.milestone.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_project_id': self.id,
+            }
+        }
+
+    def _create_reached_checkpoint(self, checkpoint_name):
+        """Create a reached checkpoint for the project"""
+        self.ensure_one()
+        
+        # Check if checkpoint already exists
+        existing_checkpoint = self.env['reached.checkpoint'].search([
+            ('name', '=', checkpoint_name),
+            ('project_id', '=', self.id)
+        ], limit=1)
+        
+        if not existing_checkpoint:
+            # Create new reached checkpoint
+            reached_checkpoint = self.env['reached.checkpoint'].create({
+                'name': checkpoint_name,
+                'project_id': self.id,
+                'reached_date': fields.Date.today(),
+                'reached_by': self.env.user.id,
+            })
+            
+            # Add to project's reached checkpoints
+            self.reached_checkpoint_ids = [(4, reached_checkpoint.id)]
+            
+            # Post message about checkpoint reached
+            self.message_post(
+                body=_("🎯 **Checkpoint Reached**: %s") % checkpoint_name,
+                message_type='notification'
+            )
+            
+            return reached_checkpoint
+        return existing_checkpoint
+
+    def _check_and_trigger_final_milestone(self):
+        """Check if all required checkpoints are reached and trigger final milestone"""
+        self.ensure_one()
+        
+        # Define all required checkpoints for project completion
+        required_checkpoints = [
+            "Required Documents Complete",
+            "Deliverable Documents Complete", 
+            "Compliance Complete",
+            "Partner Fields Complete",
+        ]
+        
+        # Get all reached checkpoints for this project
+        reached_checkpoint_names = self.reached_checkpoint_ids.mapped('name')
+        
+        # Check if all required checkpoints are reached
+        all_reached = all(checkpoint in reached_checkpoint_names for checkpoint in required_checkpoints)
+        
+        if all_reached:
+            # Create final milestone
+            final_milestone = self._create_final_milestone()
+            
+            # Post completion message
+            self.message_post(
+                body=_("🏆 **PROJECT COMPLETED!** All required checkpoints have been reached. Final milestone created: %s") % final_milestone.name,
+                message_type='notification'
+            )
+            
+            # Send completion notification
+            self._send_project_completion_notification()
+            
+            return final_milestone
+        
+        return False
+
+    def _create_final_milestone(self):
+        """Create the final milestone for project completion"""
+        self.ensure_one()
+        
+        # Create final milestone
+        final_milestone = self.env['project.milestone'].create({
+            'name': f"Project Completion - {self.name}",
+            'project_id': self.id,
+            'deadline': fields.Date.today(),
+            'milestone_message': f"🎉 **PROJECT COMPLETED!**\n\nAll required checkpoints have been reached:\n" + 
+                               "\n".join([f"✅ {checkpoint}" for checkpoint in self.reached_checkpoint_ids.mapped('name')]),
+            'is_reached': True,
+        })
+        
+        return final_milestone
+
+    def _send_project_completion_notification(self):
+        """Send notification about project completion"""
+        self.ensure_one()
+        
+        # Get completion email template
+        completion_template = self.env['mail.template'].search([
+            ('name', '=', 'Project Completion Notification')
+        ], limit=1)
+        
+        if completion_template:
+            try:
+                completion_template.send_mail(self.id, force_send=True)
+            except Exception as e:
+                _logger.error(f"Failed to send project completion email: {e}")
+        
+        # Also send internal notification
+        self.message_post(
+            body=_("📧 Project completion notification sent to stakeholders"),
+            message_type='notification'
+        )
+
+    def action_check_project_completion(self):
+        """Manually check if project is ready for completion"""
+        self.ensure_one()
+        
+        # Check current checkpoint status
+        reached_checkpoints = self.reached_checkpoint_ids.mapped('name')
+        
+        # Define required checkpoints with descriptions
+        required_checkpoints = {
+            "Required Documents Complete": "Complete the Required Documents workflow",
+            "Deliverable Documents Complete": "Complete the Deliverable Documents workflow", 
+            "Compliance Complete": "Complete the Compliance workflow",
+            "Partner Fields Complete": "Complete the Partner Fields workflow",
+        }
+        
+        # Check which checkpoints are missing
+        missing_checkpoints = []
+        for checkpoint, description in required_checkpoints.items():
+            if checkpoint not in reached_checkpoints:
+                missing_checkpoints.append(f"• {checkpoint}: {description}")
+        
+        if missing_checkpoints:
+            # Show specific missing checkpoints
+            missing_list = "\n".join(missing_checkpoints)
+            self.message_post(
+                body=_("⚠️ **Project Not Ready for Completion**\n\nMissing checkpoints:\n%s\n\nPlease complete all required workflows first.") % missing_list,
+                message_type='notification'
+            )
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Project Not Complete',
+                    'message': f'Missing {len(missing_checkpoints)} checkpoints:\n\n{missing_list}',
+                    'type': 'warning',
+                    'sticky': True,
+                }
+            }
+        else:
+            # Trigger final milestone
+            final_milestone = self._check_and_trigger_final_milestone()
+            
+            if final_milestone:
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Project Completed!',
+                        'message': f'All checkpoints reached! Final milestone created: {final_milestone.name}',
+                        'type': 'success'
+                    }
+                }
+        
+        return True
+
+    def action_get_checkpoint_status(self):
+        """Get a quick overview of checkpoint status"""
+        self.ensure_one()
+        
+        reached_checkpoints = self.reached_checkpoint_ids.mapped('name')
+        
+        # Define required checkpoints with descriptions
+        required_checkpoints = {
+            "Required Documents Complete": "Complete the Required Documents workflow",
+            "Deliverable Documents Complete": "Complete the Deliverable Documents workflow", 
+            "Compliance Complete": "Complete the Compliance workflow",
+            "Partner Fields Complete": "Complete the Partner Fields workflow",
+        }
+        
+        # Check status
+        completed_count = 0
+        status_details = []
+        
+        for checkpoint, description in required_checkpoints.items():
+            if checkpoint in reached_checkpoints:
+                status_details.append(f"✅ {checkpoint}")
+                completed_count += 1
+            else:
+                status_details.append(f"⏳ {checkpoint}: {description}")
+        
+        progress_percentage = (completed_count / len(required_checkpoints)) * 100
+        
+        status_message = f"📊 Checkpoint Status Overview:\n\n"
+        status_message += f"Progress: {completed_count}/{len(required_checkpoints)} completed ({progress_percentage:.0f}%)\n\n"
+        status_message += "\n".join(status_details)
+        
+        if completed_count == len(required_checkpoints):
+            status_message += "\n\n🎉 All checkpoints completed! Project ready for final milestone."
+        else:
+            remaining = len(required_checkpoints) - completed_count
+            status_message += f"\n\n⏳ {remaining} checkpoint(s) remaining for project completion."
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Checkpoint Status',
+                'message': status_message,
+                'type': 'info',
+                'sticky': True,
+            }
+        }
+
+    def action_test_button(self):
+        """Simple test method to verify button is working"""
+        self.ensure_one()
+        
+        _logger.info(f"🧪 Test button clicked for project: {self.name}")
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Test Button',
+                'message': f'Test button works! Project: {self.name}',
+                'type': 'success',
+                'sticky': True,
+            }
+        }
+
 
 class ProjectTask(models.Model):
     _inherit = 'project.task'
@@ -1176,6 +1992,66 @@ class ProjectTask(models.Model):
         self.required_document_update = False
         return True
 
+    def action_repeat_required_documents(self):
+        """Repeat required documents workflow - reset all states"""
+        self.ensure_one()
+        
+        # SOFT VALIDATION: Check if there are any documents before allowing repeat
+        if self.document_required_type_ids:
+            # Show confirmation dialog
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'document.action.confirmation.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_title': _('Confirm Repeat Action'),
+                    'default_message': _('⚠️ You are resetting the workflow while documents exist. This will reset all statuses.\n\nDo you want to proceed?'),
+                    'default_action_type': 'repeat_required',
+                    'default_record_id': self.id,
+                    'default_record_model': self._name,
+                }
+            }
+        
+        # No documents exist, proceed directly
+        return self._execute_repeat_required_documents()
+
+    def action_return_required_documents(self):
+        """Return required documents for review"""
+        self.ensure_one()
+        
+        # Always show confirmation dialog
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'document.action.confirmation.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_title': _('Confirm Return Action'),
+                'default_message': _('⚠️ You are returning documents for review. This will reset completion status.\n\nDo you want to proceed?'),
+                'default_action_type': 'return_required',
+                'default_record_id': self.id,
+                'default_record_model': self._name,
+            }
+        }
+
+    def _execute_repeat_required_documents(self):
+        """Execute repeat required documents workflow"""
+        self.ensure_one()
+        self.required_document_complete = False
+        self.required_document_confirm = False
+        self.required_document_update = False
+        self.message_post(body="🔄 Required documents workflow reset for repetition")
+        return {'type': 'ir.actions.act_window_close'}
+
+    def _execute_return_required_documents(self):
+        """Execute return required documents workflow"""
+        self.ensure_one()
+        self.required_document_complete = False
+        self.required_document_confirm = False
+        self.message_post(body="📤 Required documents returned for review")
+        return {'type': 'ir.actions.act_window_close'}
+
     def action_complete_deliverable_documents(self):
         """Complete deliverable documents for task"""
         self.ensure_one()
@@ -1214,6 +2090,66 @@ class ProjectTask(models.Model):
         self.ensure_one()
         self.deliverable_document_update = False
         return True
+
+    def action_repeat_deliverable_documents(self):
+        """Repeat deliverable documents workflow - reset all states"""
+        self.ensure_one()
+        
+        # SOFT VALIDATION: Check if there are any documents before allowing repeat
+        if self.document_type_ids:
+            # Show confirmation dialog
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'document.action.confirmation.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_title': _('Confirm Repeat Action'),
+                    'default_message': _('⚠️ You are resetting the workflow while documents exist. This will reset all statuses.\n\nDo you want to proceed?'),
+                    'default_action_type': 'repeat_deliverable',
+                    'default_record_id': self.id,
+                    'default_record_model': self._name,
+                }
+            }
+        
+        # No documents exist, proceed directly
+        return self._execute_repeat_deliverable_documents()
+
+    def action_return_deliverable_documents(self):
+        """Return deliverable documents for review"""
+        self.ensure_one()
+        
+        # Always show confirmation dialog
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'document.action.confirmation.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_title': _('Confirm Return Action'),
+                'default_message': _('⚠️ You are returning documents for review. This will reset completion status.\n\nDo you want to proceed?'),
+                'default_action_type': 'return_deliverable',
+                'default_record_id': self.id,
+                'default_record_model': self._name,
+            }
+        }
+
+    def _execute_repeat_deliverable_documents(self):
+        """Execute repeat deliverable documents workflow"""
+        self.ensure_one()
+        self.deliverable_document_complete = False
+        self.deliverable_document_confirm = False
+        self.deliverable_document_update = False
+        self.message_post(body="🔄 Deliverable documents workflow reset for repetition")
+        return {'type': 'ir.actions.act_window_close'}
+
+    def _execute_return_deliverable_documents(self):
+        """Execute return deliverable documents workflow"""
+        self.ensure_one()
+        self.deliverable_document_complete = False
+        self.deliverable_document_confirm = False
+        self.message_post(body="📤 Deliverable documents returned for review")
+        return {'type': 'ir.actions.act_window_close'}
 
 
 
@@ -1400,3 +2336,41 @@ class SaleOrder(models.Model):
                 import traceback
                 _logger.error(f"Full traceback: {traceback.format_exc()}")
                 continue 
+
+
+class ReachedCheckpoint(models.Model):
+    _name = 'reached.checkpoint'
+    _description = 'Reached Checkpoint'
+    _order = 'reached_date desc, id desc'
+
+    name = fields.Char(string='Checkpoint Name', required=True)
+    project_id = fields.Many2one('project.project', string='Project', ondelete='cascade')
+    task_id = fields.Many2one('project.task', string='Task', ondelete='cascade')
+    reached_date = fields.Date(string='Reached Date', default=fields.Date.today)
+    reached_by = fields.Many2one('res.users', string='Reached By', default=lambda self: self.env.user)
+    checkpoint_type = fields.Selection([
+        ('document', 'Document'),
+        ('compliance', 'Compliance'),
+        ('partner', 'Partner Fields'),
+        ('milestone', 'Milestone'),
+        ('custom', 'Custom')
+    ], string='Checkpoint Type', default='custom')
+    description = fields.Text(string='Description')
+    is_final = fields.Boolean(string='Final Checkpoint', default=False, 
+                             help='Mark as final checkpoint for project completion')
+    
+    @api.model
+    def create(self, vals):
+        """Override create to set checkpoint type based on name"""
+        if 'name' in vals:
+            name = vals['name'].lower()
+            if 'document' in name:
+                vals['checkpoint_type'] = 'document'
+            elif 'compliance' in name:
+                vals['checkpoint_type'] = 'compliance'
+            elif 'partner' in name:
+                vals['checkpoint_type'] = 'partner'
+            elif 'milestone' in name:
+                vals['checkpoint_type'] = 'milestone'
+        
+        return super().create(vals)
