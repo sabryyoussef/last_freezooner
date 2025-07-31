@@ -41,6 +41,8 @@
                         context="{'default_id': id}" groups="project.group_project_user"/>
                 <button name="%(project_documents_extension.action_project_update)d" type="action" string="Update Project" class="btn-info" 
                         context="{'default_id': id}" groups="project.group_project_user"/>
+                <button name="action_get_checkpoint_status" type="object" string="📊 Checkpoint Status" class="btn-secondary"/>
+                <button name="action_check_project_completion" type="object" string="🏆 Check Completion" class="btn-success"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Required Documents">
@@ -52,6 +54,8 @@
                                 invisible="required_document_confirm"/>
                             <button name="action_update_required_documents" type="object" string="Update" class="btn-secondary"
                                 invisible="required_document_update"/>
+                            <button name="action_repeat_required_documents" type="object" string="Repeat" class="btn-danger"/>
+                            <button name="action_return_required_documents" type="object" string="Return" class="btn-warning"/>
                         </div>
                         <div style="margin-left: 24px;">
                             <field name="required_document_complete" widget="boolean_toggle" readonly="1"/>
@@ -96,6 +100,8 @@
                                 invisible="deliverable_document_confirm"/>
                             <button name="action_update_deliverable_documents" type="object" string="Update" class="btn-secondary"
                                 invisible="deliverable_document_update"/>
+                            <button name="action_repeat_deliverable_documents" type="object" string="Repeat" class="btn-danger"/>
+                            <button name="action_return_deliverable_documents" type="object" string="Return" class="btn-warning"/>
                         </div>
                         <div style="margin-left: 24px;">
                             <field name="deliverable_document_complete" widget="boolean_toggle" readonly="1"/>
@@ -133,47 +139,117 @@
                 </page>
                 <!-- Partner Related Fields (Compliance) Tab -->
                 <page name="partner_fields" string="Partner Related Fields">
-                    <group string="Partner Fields Workflow">
+                    <!-- 📋 Workflow Status Section -->
+                    <group string="📋 Workflow Status" name="workflow_status">
                         <div class="o_row" style="display: flex; align-items: center; gap: 8px;">
-                            <button name="action_complete_partner_fields" type="object" string="Complete" class="btn-primary" invisible="is_complete_partner_fields"/>
+                            <button name="action_complete_partner_fields" type="object" string="✅ Complete" class="btn-success" invisible="is_complete_partner_fields"/>
                             <field name="is_complete_partner_fields" widget="boolean_toggle" readonly="1"/>
-                            <button name="action_reset_partner_fields_complete" type="object" string="Reset" class="btn-link" invisible="not is_complete_partner_fields"/>
-                            <button name="action_confirm_partner_fields" type="object" string="Confirm" class="btn-secondary" invisible="is_confirm_partner_fields"/>
+                            <button name="action_reset_partner_fields_complete" type="object" string="🔄 Reset" class="btn-link" invisible="not is_complete_partner_fields"/>
+                            <button name="action_confirm_partner_fields" type="object" string="✅ Confirm" class="btn-primary" invisible="is_confirm_partner_fields"/>
                             <field name="is_confirm_partner_fields" widget="boolean_toggle" readonly="1"/>
-                            <button name="action_reset_partner_fields_confirm" type="object" string="Reset" class="btn-link" invisible="not is_confirm_partner_fields"/>
-                            <button name="action_complete_return_partner_fields" type="object" string="Return" class="btn-secondary" invisible="is_complete_return_partner_fields"/>
+                            <button name="action_reset_partner_fields_confirm" type="object" string="🔄 Reset" class="btn-link" invisible="not is_confirm_partner_fields"/>
+                            <button name="action_complete_return_partner_fields" type="object" string="🔄 Return" class="btn-warning" invisible="is_complete_return_partner_fields"/>
                             <field name="is_complete_return_partner_fields" widget="boolean_toggle" readonly="1"/>
-                            <button name="action_reset_partner_fields_return" type="object" string="Reset" class="btn-link" invisible="not is_complete_return_partner_fields"/>
-                            <button name="action_update_partner_fields" type="object" string="Update" class="btn-secondary" invisible="is_update_partner_fields"/>
+                            <button name="action_reset_partner_fields_return" type="object" string="🔄 Reset" class="btn-link" invisible="not is_complete_return_partner_fields"/>
+                            <button name="action_update_partner_fields" type="object" string="📝 Update" class="btn-info" invisible="is_update_partner_fields"/>
                             <field name="is_update_partner_fields" widget="boolean_toggle" readonly="1"/>
-                            <button name="action_reset_partner_fields_update" type="object" string="Reset" class="btn-link" invisible="not is_update_partner_fields"/>
+                            <button name="action_reset_partner_fields_update" type="object" string="🔄 Reset" class="btn-link" invisible="not is_update_partner_fields"/>
                         </div>
                     </group>
-                    <field name="project_field_ids">
-                        <list editable="bottom">
-                            <field name="partner_id" invisible="1" force_save="1" />
-                            <field name="field_id" required="1" force_save="1" />
-                            <field name="field_name" invisible="1" />
-                            <field name="is_required" force_save="1" />
-                            <field name="current_value" />
-                            <field name="update_value" />
-                            <field name="is_line_readonly" invisible="1" />
-                        </list>
-                        <form>
-                            <group>
+                    
+                    <!-- 🔍 Verification Actions Section -->
+                    <group string="🔍 Verification Actions" name="verification_actions">
+                        <div class="o_row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <button name="action_verify_partner" type="object" string="✅ Verify Partner" class="btn-success" 
+                                    invisible="is_verified" context="{'default_project_id': id}"/>
+                            <button name="action_unverify_partner" type="object" string="❌ Unverify Partner" class="btn-danger" 
+                                    invisible="not is_verified" context="{'default_project_id': id}"/>
+                        </div>
+                        <div class="o_row" style="display: flex; align-items: center; gap: 8px;">
+                            <button name="action_validate_legal_entity" type="object" string="🏢 Validate Legal Entity" class="btn-warning"/>
+                            <button name="action_validate_hand_type" type="object" string="🤝 Validate Hand Type" class="btn-warning"/>
+                        </div>
+                    </group>
+                    
+                    <!-- 🏢 Legal Entity & Hand Management Section -->
+                    <group string="🏢 Legal Entity &amp; Hand Management" name="legal_hand_management">
+                        <group>
+                            <field name="legal_entity_type_id" string="Legal Entity Type"/>
+                            <field name="hand_type_id" string="Hand Type"/>
+                        </group>
+                    </group>
+                    
+                    <!-- 📄 Enhanced Partner Information Section -->
+                    <group string="📄 Enhanced Partner Information" name="enhanced_info">
+                        <group>
+                            <field name="trade_license_number" string="Trade License Number"/>
+                            <field name="establishment_card_number" string="Establishment Card Number"/>
+                            <field name="visa_number" string="Visa Number"/>
+                        </group>
+                        <group>
+                            <field name="emirates_id" string="Emirates ID"/>
+                            <field name="passport_number" string="Passport Number"/>
+                        </group>
+                    </group>
+                    
+                    <!-- ✅ Status & Verification Section -->
+                    <group string="✅ Status &amp; Verification" name="status_verification">
+                        <group>
+                            <field name="is_verified" string="Verified"/>
+                            <field name="verification_date" string="Verification Date"/>
+                            <field name="verified_by" string="Verified By"/>
+                        </group>
+                    </group>
+                    
+                    <!-- 📋 Partner Fields Table Section -->
+                    <group string="📋 Partner Fields Management" name="partner_fields_table">
+                        <field name="project_field_ids">
+                            <list editable="bottom">
+                                <field name="partner_id" invisible="1" force_save="1" />
+                                <field name="field_id" required="1" force_save="1" />
+                                <field name="field_name" invisible="1" />
+                                <field name="is_required" force_save="1" />
+                                <field name="current_value" />
+                                <field name="update_value" />
+                                <field name="is_line_readonly" invisible="1" />
+                            </list>
+                            <form>
                                 <group>
-                                    <field name="field_id" required="1" />
-                                    <field name="is_required" />
-                                    <field name="current_value" readonly="1" />
+                                    <group>
+                                        <field name="field_id" required="1" />
+                                        <field name="is_required" />
+                                        <field name="current_value" readonly="1" />
+                                    </group>
+                                    <group>
+                                        <field name="update_value" />
+                                        <field name="is_line_readonly" />
+                                    </group>
                                 </group>
-                                <group>
-                                    <field name="update_value" />
-                                    <field name="is_line_readonly" />
-                                </group>
-                            </group>
-                                                 </form>
-                     </field>
-                 </page>
+                            </form>
+                        </field>
+                    </group>
+                    
+                    <!-- 🎯 Milestone Integration Section -->
+                    <group string="🎯 Milestone Management" name="milestone_management">
+                        <div class="o_row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <button name="action_get_milestone_progress" type="object" string="📊 Get Milestone Progress" class="btn-info"/>
+                            <button name="action_send_milestone_summary_email" type="object" string="📧 Send Milestone Summary" class="btn-warning"/>
+                            <button name="action_complete_checkpoint_with_milestone_simple" type="object" string="✅ Complete Checkpoint with Milestone" class="btn-success"/>
+                            <button name="action_create_milestone" type="object" string="➕ Create Milestone" class="btn-primary"/>
+                            <button name="action_test_button" type="object" string="🧪 Test Button" class="btn-secondary"/>
+                        </div>
+                        <field name="milestone_ids">
+                            <list>
+                                <field name="name"/>
+                                <field name="deadline"/>
+                                <field name="is_reached"/>
+                                <field name="checkpoint_count"/>
+                                <field name="mail_template_id"/>
+                                <field name="milestone_message"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
                                  <!-- Compliance Notes Tab (moved to main level) -->
                 <page name="compliance_notes" string="Compliance Notes">
                     <group string="Compliance Workflow">
@@ -286,6 +362,8 @@
                                 invisible="required_document_confirm"/>
                             <button name="action_update_required_documents" type="object" string="Update" class="btn-sm btn-secondary"
                                 invisible="required_document_update"/>
+                            <button name="action_repeat_required_documents" type="object" string="Repeat" class="btn-sm btn-danger"/>
+                            <button name="action_return_required_documents" type="object" string="Return" class="btn-sm btn-warning"/>
                             <field name="required_document_complete" widget="boolean_toggle" readonly="1" style="margin-left: 8px;"/>
                             <button name="action_reset_required_document_complete" type="object" string="Reset" class="btn-sm btn-link"
                                 invisible="not required_document_complete"/>
@@ -306,6 +384,8 @@
                                 invisible="deliverable_document_confirm"/>
                             <button name="action_update_deliverable_documents" type="object" string="Update" class="btn-sm btn-secondary"
                                 invisible="deliverable_document_update"/>
+                            <button name="action_repeat_deliverable_documents" type="object" string="Repeat" class="btn-sm btn-danger"/>
+                            <button name="action_return_deliverable_documents" type="object" string="Return" class="btn-sm btn-warning"/>
                             <field name="deliverable_document_complete" widget="boolean_toggle" readonly="1" style="margin-left: 8px;"/>
                             <button name="action_reset_deliverable_document_complete" type="object" string="Reset" class="btn-sm btn-link"
                                 invisible="not deliverable_document_complete"/>
@@ -330,19 +410,36 @@
                     </div>
                     <field name="task_checkpoint_ids">
                         <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
                             <field name="checkpoint_ids" widget="many2many_tags"/>
                             <field name="stage_id"/>
                             <field name="milestone_id"/>
-                            <field name="sequence"/>
                         </list>
                         <form>
                             <group>
+                                <field name="sequence" widget="handle"/>
                                 <field name="checkpoint_ids" widget="many2many_tags"/>
                                 <field name="stage_id"/>
                                 <field name="milestone_id"/>
-                                <field name="sequence"/>
                             </group>
                         </form>
+                    </field>
+                </group>
+                
+                <!-- 🎯 Task Milestone Management -->
+                <group string="🎯 Task Milestone Management" name="task_milestone_management">
+                                            <div class="o_row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <button name="action_get_task_milestone_progress" type="object" string="📊 Get Task Milestone Progress" class="btn-info"/>
+                            <button name="action_complete_checkpoint_with_milestone_simple" type="object" string="✅ Complete Checkpoint with Milestone" class="btn-success"/>
+                        </div>
+                    <field name="milestone_id"/>
+                    <field name="milestone_ids" readonly="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="deadline"/>
+                            <field name="is_reached"/>
+                            <field name="milestone_message"/>
+                        </list>
                     </field>
                 </group>
             </xpath>
@@ -473,6 +570,13 @@
                 <sheet>
                     <group>
                         <field name="name"/>
+                        <field name="project_id"/>
+                        <field name="task_id"/>
+                        <field name="checkpoint_type"/>
+                        <field name="reached_date"/>
+                        <field name="reached_by"/>
+                        <field name="is_final"/>
+                        <field name="description"/>
                     </group>
                 </sheet>
             </form>
@@ -485,6 +589,11 @@
         <field name="arch" type="xml">
             <list string="Reached Checkpoints">
                 <field name="name"/>
+                <field name="project_id"/>
+                <field name="checkpoint_type"/>
+                <field name="reached_date"/>
+                <field name="reached_by"/>
+                <field name="is_final"/>
             </list>
         </field>
     </record>
@@ -495,6 +604,17 @@
         <field name="arch" type="xml">
             <search string="Search Checkpoints">
                 <field name="name"/>
+                <field name="project_id"/>
+                <field name="checkpoint_type"/>
+                <filter name="final_checkpoints" string="Final Checkpoints" domain="[('is_final', '=', True)]"/>
+                <filter name="document_checkpoints" string="Document Checkpoints" domain="[('checkpoint_type', '=', 'document')]"/>
+                <filter name="compliance_checkpoints" string="Compliance Checkpoints" domain="[('checkpoint_type', '=', 'compliance')]"/>
+                <filter name="partner_checkpoints" string="Partner Checkpoints" domain="[('checkpoint_type', '=', 'partner')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_by_project" string="Project" context="{'group_by': 'project_id'}"/>
+                    <filter name="group_by_type" string="Type" context="{'group_by': 'checkpoint_type'}"/>
+                    <filter name="group_by_date" string="Date" context="{'group_by': 'reached_date'}"/>
+                </group>
             </search>
         </field>
     </record>
@@ -525,13 +645,27 @@
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
                 <page string="Reached Checkpoints">
+                    <group>
+                        <field name="checkpoint_summary" readonly="1" widget="html"/>
+                    </group>
                     <field name="reached_checkpoint_ids">
                         <list editable="bottom">
                             <field name="name"/>
+                            <field name="checkpoint_type"/>
+                            <field name="reached_date"/>
+                            <field name="reached_by"/>
+                            <field name="is_final"/>
+                            <field name="description"/>
                         </list>
                         <form>
                             <group>
                                 <field name="name"/>
+                                <field name="project_id" invisible="1"/>
+                                <field name="checkpoint_type"/>
+                                <field name="reached_date"/>
+                                <field name="reached_by"/>
+                                <field name="is_final"/>
+                                <field name="description"/>
                             </group>
                         </form>
                     </field>

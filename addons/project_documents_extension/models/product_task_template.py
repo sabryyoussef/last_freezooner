@@ -40,19 +40,6 @@ class ProductSubtaskTemplate(models.Model):
     priority = fields.Selection([('0', 'Low'), ('1', 'High')], string='Priority', default='0')
     milestone_message = fields.Text(string='Milestone Message')
 
-class ReachedCheckpoint(models.Model):
-    _name = 'reached.checkpoint'
-    _description = 'Reached Checkpoint'
-    _rec_name = 'name'
-
-    name = fields.Char(string='Checkpoint Name', required=True)
-    record_name = fields.Char(string='Record Name', compute='_compute_record_name', store=True)
-
-    @api.depends('name')
-    def _compute_record_name(self):
-        for record in self:
-            record.record_name = record.name or ''
-
 class ProductTaskTemplateCheckpoint(models.Model):
     _name = 'product.task.template.checkpoint'
     _description = 'Product Task Template Checkpoint'
@@ -79,6 +66,7 @@ class ProjectTask(models.Model):
     _inherit = 'project.task'
 
     task_checkpoint_ids = fields.One2many('task.checkpoint', 'task_id', string='Checkpoints')
+    milestone_ids = fields.Many2many('project.milestone', string='Milestones')
     
     # Handover checkpoints
     is_complete_return_hand = fields.Selection([
@@ -402,6 +390,82 @@ class ProjectTask(models.Model):
     def action_reset_deliverable_document_update(self):
         self.deliverable_document_update = False
         self.is_update_deliverable = 'not_started' 
+
+    def action_trigger_milestone_notification(self, milestone):
+        """Trigger milestone notification for this task"""
+        self.ensure_one()
+        if milestone:
+            milestone.send_milestone_notification(self)
+            self.message_post(
+                body=f"🎯 **Milestone Reached**: {milestone.name}\n\n{milestone.milestone_message or 'Milestone completed successfully.'}",
+                message_type='notification'
+            )
+        return True
+
+    def action_complete_checkpoint_with_milestone(self, checkpoint_name):
+        """Complete a checkpoint and trigger milestone notification if applicable"""
+        self.ensure_one()
+        
+        # Find the checkpoint
+        checkpoint = self.task_checkpoint_ids.filtered(
+            lambda c: checkpoint_name in c.checkpoint_ids.mapped('name')
+        )[:1]
+        
+        if checkpoint and checkpoint.milestone_id:
+            # Trigger milestone notification
+            checkpoint.milestone_id.send_milestone_notification(self)
+            
+            # Log checkpoint completion
+            self.message_post(
+                body=f"✅ **Checkpoint Completed**: {checkpoint_name}\n\nMilestone: {checkpoint.milestone_id.name}",
+                message_type='notification'
+            )
+            
+            return True
+        
+        return False
+
+    def action_complete_checkpoint_with_milestone_simple(self):
+        """Simple action to complete checkpoint with milestone (no parameters)"""
+        self.ensure_one()
+        
+        # Find any checkpoint with a milestone
+        checkpoint = self.task_checkpoint_ids.filtered(
+            lambda c: c.milestone_id
+        )[:1]
+        
+        if checkpoint:
+            checkpoint_name = checkpoint.checkpoint_ids.mapped('name')[0] if checkpoint.checkpoint_ids else "Checkpoint"
+            return self.action_complete_checkpoint_with_milestone(checkpoint_name)
+        else:
+            # Show notification that no milestone-linked checkpoints found
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'No Milestone Checkpoints',
+                    'message': 'No checkpoints with linked milestones found for this task.',
+                    'type': 'warning'
+                }
+            }
+
+    def action_get_task_milestone_progress(self):
+        """Get milestone progress for this task"""
+        self.ensure_one()
+        milestones = self.milestone_ids
+        total_milestones = len(milestones)
+        completed_milestones = len(milestones.filtered(lambda m: m.is_reached))
+        
+        progress = {
+            'total': total_milestones,
+            'completed': completed_milestones,
+            'percentage': (completed_milestones / total_milestones * 100) if total_milestones > 0 else 0,
+            'milestones': milestones.mapped('name'),
+            'completed_milestones': completed_milestones.mapped('name'),
+            'pending_milestones': milestones.filtered(lambda m: not m.is_reached).mapped('name'),
+        }
+        
+        return progress
 
 class TaskDocumentRequiredLines(models.Model):
     _name = 'task.document.required.lines'

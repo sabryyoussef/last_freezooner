@@ -36,6 +36,11 @@ class TaskCheckpointService(models.AbstractModel):
                 
                 task_checkpoint = self.env['task.checkpoint'].create(task_checkpoint_vals)
                 
+                # If milestone is assigned, link it to the task
+                if template_checkpoint.milestone_id:
+                    task.milestone_id = template_checkpoint.milestone_id.id
+                    _logger.info(f"Milestone '{template_checkpoint.milestone_id.name}' assigned to task '{task.name}'")
+                
         except Exception as e:
             _logger.error(f"Error copying checkpoint configurations from template {template.name} to task {task.name}: {e}")
 
@@ -88,6 +93,7 @@ class TaskCheckpointService(models.AbstractModel):
                 • Priority: {template.priority or 'Normal'}<br/>
                 • Assigned Users: {len(template.user_ids)}<br/>
                 • Checkpoint Configurations: {len(template.checkpoint_ids)}
+                {f'<br/>• Milestone: {task.milestone_id.name}' if task.milestone_id else ''}
             """
             task.message_post(body=creation_message)
             
@@ -98,22 +104,109 @@ class TaskCheckpointService(models.AbstractModel):
             return None
 
     @api.model
-    def create_tasks_from_templates(self, project, templates):
+    def trigger_milestone_notification(self, task, milestone):
         """
-        Create multiple tasks from templates with checkpoint configurations
+        Trigger milestone notification when checkpoint is completed
+        
+        Args:
+            task: project.task record
+            milestone: project.milestone record
+        """
+        try:
+            if milestone and task:
+                # Send milestone notification
+                milestone.send_milestone_notification(task)
+                
+                # Log milestone reached
+                task.message_post(
+                    body=f"🎯 **Milestone Reached**: {milestone.name}\n\n{milestone.milestone_message or 'Milestone completed successfully.'}",
+                    message_type='notification'
+                )
+                
+                _logger.info(f"Milestone notification sent for task '{task.name}' and milestone '{milestone.name}'")
+                
+        except Exception as e:
+            _logger.error(f"Error triggering milestone notification for task {task.name}: {e}")
+
+    @api.model
+    def complete_checkpoint_with_milestone(self, task, checkpoint_name):
+        """
+        Complete a checkpoint and trigger milestone notification if applicable
+        
+        Args:
+            task: project.task record
+            checkpoint_name: string name of the checkpoint
+        """
+        try:
+            # Find the checkpoint
+            checkpoint = task.task_checkpoint_ids.filtered(
+                lambda c: checkpoint_name in c.checkpoint_ids.mapped('name')
+            )[:1]
+            
+            if checkpoint and checkpoint.milestone_id:
+                # Trigger milestone notification
+                self.trigger_milestone_notification(task, checkpoint.milestone_id)
+                
+                # Log checkpoint completion
+                task.message_post(
+                    body=f"✅ **Checkpoint Completed**: {checkpoint_name}\n\nMilestone: {checkpoint.milestone_id.name}",
+                    message_type='notification'
+                )
+                
+                _logger.info(f"Checkpoint '{checkpoint_name}' completed for task '{task.name}' with milestone '{checkpoint.milestone_id.name}'")
+            
+        except Exception as e:
+            _logger.error(f"Error completing checkpoint '{checkpoint_name}' for task {task.name}: {e}")
+
+    @api.model
+    def get_milestone_progress(self, project):
+        """
+        Get milestone progress for a project
         
         Args:
             project: project.project record
-            templates: product.task.template recordset
             
         Returns:
-            list of created project.task records
+            dict with milestone progress information
         """
-        created_tasks = []
+        try:
+            milestones = project.milestone_ids
+            total_milestones = len(milestones)
+            completed_milestones = len(milestones.filtered(lambda m: m.is_reached))
+            
+            progress = {
+                'total': total_milestones,
+                'completed': completed_milestones,
+                'percentage': (completed_milestones / total_milestones * 100) if total_milestones > 0 else 0,
+                'milestones': milestones.mapped('name'),
+                'completed_milestones': completed_milestones.mapped('name'),
+                'pending_milestones': milestones.filtered(lambda m: not m.is_reached).mapped('name'),
+            }
+            
+            return progress
+            
+        except Exception as e:
+            _logger.error(f"Error getting milestone progress for project {project.name}: {e}")
+            return {}
+
+    @api.model
+    def send_milestone_summary_email(self, project):
+        """
+        Send milestone summary email for a project
         
-        for template in templates:
-            task = self.create_task_with_checkpoints(project, template)
-            if task:
-                created_tasks.append(task)
-        
-        return created_tasks 
+        Args:
+            project: project.project record
+        """
+        try:
+            if project.partner_id and project.milestone_ids:
+                # Get milestone summary template
+                template = self.env.ref('project_documents_extension.email_template_milestone_summary', raise_if_not_found=False)
+                
+                if template:
+                    template.send_mail(project.id, force_send=True)
+                    _logger.info(f"Milestone summary email sent for project '{project.name}'")
+                else:
+                    _logger.warning("Milestone summary email template not found")
+                    
+        except Exception as e:
+            _logger.error(f"Error sending milestone summary email for project {project.name}: {e}") 

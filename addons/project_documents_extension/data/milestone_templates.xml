@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Milestone Reached Email Template -->
+        <record id="email_template_milestone_reached" model="mail.template">
+            <field name="name">Milestone Reached Notification</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="subject">🎯 Milestone Reached: {{ object.milestone_id.name or 'Project Milestone' }}</field>
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="partner_to">{{ object.partner_id.id if object.partner_id else '' }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-size: 13px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear {{ object.partner_id.name or 'Valued Customer' }},
+                    </p>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        We are pleased to inform you that a milestone has been reached in your project:
+                    </p>
+                    <div style="margin: 16px 0px 16px 0px; padding: 8px; background-color: #f8f9fa; border-left: 4px solid #007bff;">
+                        <p style="margin: 0px; padding: 0px; font-size: 13px; font-weight: bold;">
+                            🎯 <strong>Milestone:</strong> {{ object.milestone_id.name or 'Project Milestone' }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Project:</strong> {{ object.project_id.name or 'N/A' }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Task:</strong> {{ object.name or 'N/A' }}
+                        </p>
+                        {% if object.milestone_id.milestone_message %}
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Message:</strong> {{ object.milestone_id.milestone_message }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        This milestone represents significant progress in your project. We will continue to keep you updated on further developments.
+                    </p>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Thank you for your continued partnership.
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Best regards,<br/>
+                        {{ user.name }}
+                    </p>
+                </div>
+            </field>
+            <field name="lang">{{ object.partner_id.lang or 'en_US' }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Checkpoint Completed Email Template -->
+        <record id="email_template_checkpoint_completed" model="mail.template">
+            <field name="name">Checkpoint Completed Notification</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="subject">✅ Checkpoint Completed: {{ object.name or 'Task Checkpoint' }}</field>
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="partner_to">{{ object.partner_id.id if object.partner_id else '' }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-size: 13px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear {{ object.partner_id.name or 'Valued Customer' }},
+                    </p>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        We are pleased to inform you that a checkpoint has been completed in your project:
+                    </p>
+                    <div style="margin: 16px 0px 16px 0px; padding: 8px; background-color: #f8f9fa; border-left: 4px solid #28a745;">
+                        <p style="margin: 0px; padding: 0px; font-size: 13px; font-weight: bold;">
+                            ✅ <strong>Checkpoint:</strong> {{ object.name or 'Task Checkpoint' }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Project:</strong> {{ object.project_id.name or 'N/A' }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Task:</strong> {{ object.name or 'N/A' }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Completed By:</strong> {{ user.name }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Completion Date:</strong> {{ context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M') }}
+                        </p>
+                    </div>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        This checkpoint completion brings us one step closer to project completion. We will continue to keep you updated on further progress.
+                    </p>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Thank you for your continued partnership.
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Best regards,<br/>
+                        {{ user.name }}
+                    </p>
+                </div>
+            </field>
+            <field name="lang">{{ object.partner_id.lang or 'en_US' }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Project Milestone Summary Email Template -->
+        <record id="email_template_milestone_summary" model="mail.template">
+            <field name="name">Project Milestone Summary</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="subject">📊 Project Milestone Summary: {{ object.name or 'Project' }}</field>
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="partner_to">{{ object.partner_id.id if object.partner_id else '' }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px; font-size: 13px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear {{ object.partner_id.name or 'Valued Customer' }},
+                    </p>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Here is a summary of milestones for your project:
+                    </p>
+                    <div style="margin: 16px 0px 16px 0px; padding: 8px; background-color: #f8f9fa; border-left: 4px solid #17a2b8;">
+                        <p style="margin: 0px; padding: 0px; font-size: 13px; font-weight: bold;">
+                            📊 <strong>Project:</strong> {{ object.name or 'N/A' }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Total Milestones:</strong> {{ len(object.milestone_ids) or 0 }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Completed Milestones:</strong> {{ len(object.milestone_ids.filtered(lambda m: m.is_reached)) or 0 }}
+                        </p>
+                        <p style="margin: 8px 0px 0px 0px; padding: 0px; font-size: 13px;">
+                            <strong>Progress:</strong> {{ (len(object.milestone_ids.filtered(lambda m: m.is_reached)) / len(object.milestone_ids) * 100 if len(object.milestone_ids) > 0 else 0 }:.1f}%
+                        </p>
+                    </div>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        We will continue to keep you updated on milestone progress and project completion.
+                    </p>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Thank you for your continued partnership.
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Best regards,<br/>
+                        {{ user.name }}
+                    </p>
+                </div>
+            </field>
+            <field name="lang">{{ object.partner_id.lang or 'en_US' }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Project Completion Notification Template -->
+        <record id="email_template_project_completion" model="mail.template">
+            <field name="name">Project Completion Notification</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="subject">🏆 Project Completed: {{ object.name }}</field>
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="partner_to">{{ object.user_id.partner_id.id }}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear {{ object.user_id.name }},
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        <strong>🎉 Congratulations!</strong> Your project <strong>{{ object.name }}</strong> has been successfully completed.
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        <strong>Project Details:</strong><br/>
+                        • Project Name: {{ object.name }}<br/>
+                        • Completion Date: {{ object.date_end or fields.Date.today() }}<br/>
+                        • Project Manager: {{ object.user_id.name }}
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        <strong>✅ All Required Checkpoints Completed:</strong><br/>
+                        {% for checkpoint in object.reached_checkpoint_ids %}
+                        • {{ checkpoint.name }} ({{ checkpoint.reached_date }})<br/>
+                        {% endfor %}
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        The project has met all requirements and deliverables. Thank you for your collaboration and hard work!
+                    </p>
+                    <br/>
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Best regards,<br/>
+                        {{ user.name }}
+                    </p>
+                </div>
+            </field>
+            <field name="lang">{{ object.user_id.lang }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+    </data>
+</odoo> 

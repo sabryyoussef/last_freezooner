@@ -4,6 +4,8 @@ access_project_document_type_line,project_document_type_line,model_project_docum
 access_project_document_category,project_document_category,model_project_document_category,,1,1,1,1
 access_project_document_type,project_document_type,model_project_document_type,,1,1,1,1
 access_project_res_partner_fields,project_res_partner_fields,model_project_res_partner_fields,,1,1,1,1
+access_legal_entity_type,legal_entity_type,model_legal_entity_type,,1,1,1,1
+access_partner_hand_type,partner_hand_type,model_partner_hand_type,,1,1,1,1
 access_product_task_template,product_task_template,model_product_task_template,,1,1,1,1
 access_product_subtask_template,product_subtask_template,model_product_subtask_template,,1,1,1,1
 product.task.template.checkpoint,product.task.template.checkpoint,model_product_task_template_checkpoint,base.group_user,1,0,0,0
@@ -14,6 +16,9 @@ task.checkpoint,task.checkpoint,model_task_checkpoint,base.group_user,1,0,0,0
 task.checkpoint,task.checkpoint,model_task_checkpoint,base.group_system,1,1,1,1
 access_document_upload_wizard_user,access.document.upload.wizard.user,model_document_upload_wizard,base.group_user,1,1,1,0
 access_duplicate_document_warning_wizard_user,duplicate.document.warning.wizard.user,model_duplicate_document_warning_wizard,base.group_user,1,1,1,0
+access_document_action_confirmation_wizard_user,document.action.confirmation.wizard.user,model_document_action_confirmation_wizard,base.group_user,1,1,1,0
+access_milestone_test_wizard_user,milestone.test.wizard.user,model_milestone_test_wizard,base.group_user,1,1,1,0
+access_quick_milestone_wizard_user,quick.milestone.wizard.user,model_quick_milestone_wizard,base.group_user,1,1,1,0
 access_task_document_required_lines,task.document.required.lines,model_task_document_required_lines,base.group_user,1,1,1,1
 access_product_template_required_documents,product.template.required.documents,model_product_template_required_documents,base.group_user,1,1,1,1
 access_checkpoint_history,checkpoint.history,model_checkpoint_history,base.group_user,1,1,1,1
