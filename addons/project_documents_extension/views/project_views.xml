@@ -1,24 +1,4 @@
 <odoo>
-    <!-- Project Return Action -->
-    <record id="action_project_return" model="ir.actions.act_window">
-        <field name="name">Return Project</field>
-        <field name="res_model">project.project</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="project_return_form_view"/>
-        <field name="target">new</field>
-        <field name="context">{'default_id': active_id}</field>
-    </record>
-
-    <!-- Project Update Action -->
-    <record id="action_project_update" model="ir.actions.act_window">
-        <field name="name">Update Project Fields</field>
-        <field name="res_model">project.project</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="project_update_fields_form_view"/>
-        <field name="target">new</field>
-        <field name="context">{'default_id': active_id}</field>
-    </record>
-
     <record id="view_project_list_documents_extension" model="ir.ui.view">
         <field name="name">project.project.list.documents.extension</field>
         <field name="model">project.project</field>
@@ -488,6 +468,26 @@
                 </footer>
             </form>
         </field>
+    </record>
+
+    <!-- Project Return Action -->
+    <record id="action_project_return" model="ir.actions.act_window">
+        <field name="name">Return Project</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="project_return_form_view"/>
+        <field name="target">new</field>
+        <field name="context">{'default_id': active_id}</field>
+    </record>
+
+    <!-- Project Update Action -->
+    <record id="action_project_update" model="ir.actions.act_window">
+        <field name="name">Update Project Fields</field>
+        <field name="res_model">project.project</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="project_update_fields_form_view"/>
+        <field name="target">new</field>
+        <field name="context">{'default_id': active_id}</field>
     </record>
 
     <!-- Checkpoint History List View -->
