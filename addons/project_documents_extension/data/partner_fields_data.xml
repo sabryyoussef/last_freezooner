@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Legal Entity Types -->
+        <record id="legal_entity_fzco" model="legal.entity.type">
+            <field name="name">Free Zone Company (FZCO)</field>
+            <field name="code">FZCO</field>
+            <field name="sequence">10</field>
+            <field name="description">Free Zone Company - A company registered in a free zone with 100% foreign ownership</field>
+            <field name="requirements">- Trade License
+- Memorandum of Association
+- Articles of Association
+- Share Certificate
+- Establishment Card</field>
+        </record>
+
+        <record id="legal_entity_fze" model="legal.entity.type">
+            <field name="name">Free Zone Establishment (FZE)</field>
+            <field name="code">FZE</field>
+            <field name="sequence">20</field>
+            <field name="description">Free Zone Establishment - A single shareholder company in a free zone</field>
+            <field name="requirements">- Trade License
+- Memorandum of Association
+- Articles of Association
+- Establishment Card</field>
+        </record>
+
+        <record id="legal_entity_llc" model="legal.entity.type">
+            <field name="name">Limited Liability Company (LLC)</field>
+            <field name="code">LLC</field>
+            <field name="sequence">30</field>
+            <field name="description">Limited Liability Company - A company with local partner requirements</field>
+            <field name="requirements">- Trade License
+- Memorandum of Association
+- Articles of Association
+- Local Partner Agreement
+- Establishment Card</field>
+        </record>
+
+        <record id="legal_entity_branch" model="legal.entity.type">
+            <field name="name">Branch Office</field>
+            <field name="code">BRANCH</field>
+            <field name="sequence">40</field>
+            <field name="description">Branch Office - A branch of a foreign company</field>
+            <field name="requirements">- Trade License
+- Parent Company Documents
+- Board Resolution
+- Establishment Card</field>
+        </record>
+
+        <!-- Partner Hand Types -->
+        <record id="hand_type_company" model="partner.hand.type">
+            <field name="name">Company</field>
+            <field name="code">COMPANY</field>
+            <field name="sequence">10</field>
+            <field name="description">Legal entity (company, corporation, etc.)</field>
+        </record>
+
+        <record id="hand_type_individual" model="partner.hand.type">
+            <field name="name">Individual</field>
+            <field name="code">INDIVIDUAL</field>
+            <field name="sequence">20</field>
+            <field name="description">Natural person (individual, sole proprietor, etc.)</field>
+        </record>
+
+        <record id="hand_type_partnership" model="partner.hand.type">
+            <field name="name">Partnership</field>
+            <field name="code">PARTNERSHIP</field>
+            <field name="sequence">30</field>
+            <field name="description">Partnership or joint venture</field>
+        </record>
+
+        <record id="hand_type_government" model="partner.hand.type">
+            <field name="name">Government</field>
+            <field name="code">GOVERNMENT</field>
+            <field name="sequence">40</field>
+            <field name="description">Government entity or agency</field>
+        </record>
+    </data>
+</odoo> 

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Compliance Dashboard View -->
+        <record id="view_compliance_dashboard" model="ir.ui.view">
+            <field name="name">compliance.dashboard</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <kanban>
+                    <field name="id"/>
+                    <field name="name"/>
+                    <field name="compliance_status"/>
+                    <field name="business_structure_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click">
+                                <div class="oe_kanban_details">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <div class="o_kanban_record_subtitle">
+                                        <field name="compliance_status"/>
+                                    </div>
+                                    <div t-if="record.business_structure_id.raw_value">
+                                        <field name="business_structure_id"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+                    </field>
+    </record>
+    
+    <!-- Menu Definitions -->
+    <menuitem id="compliance_root_menu" name="Compliance"
+        web_icon="compliance_cycle,static/description/icon.png"
+        sequence="3" />
+    <menuitem id="initial_data_menu" name="Data"
+        parent="compliance_cycle.compliance_root_menu" sequence="20" />
+</data>
+</odoo> 

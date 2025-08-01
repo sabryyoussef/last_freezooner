@@ -1,0 +1,26 @@
+<odoo>
+    <record id="res_partner_custom_fields" model="ir.ui.view">
+        <field name="name">res.partner.custom.fields</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="after">
+                <group name="assessment_group">
+                    <group string="OPERATION TEAMS">
+                        <field name="primary_support_id"/>
+                        <field name="secondary_support_id"/>
+                    </group>
+                </group>
+            </xpath>
+            <xpath expr="//group[@name='misc']" position="after">
+                <group string="Accounts">
+                    <field name="accountant1_id"/>
+                    <field name="accountant2_id"/>
+                </group>
+            </xpath>
+            <xpath expr="//field[@name='vat']" position="attributes">
+                <attribute name="string">VAT Number</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>
