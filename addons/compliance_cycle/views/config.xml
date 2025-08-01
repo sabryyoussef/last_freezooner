@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Compliance Configuration View - Commented out for now -->
-        <!--
-        <record id="view_compliance_config" model="ir.ui.view">
+        <!-- Compliance Configuration View - Temporarily disabled due to missing field -->
+        <!-- <record id="view_compliance_config" model="ir.ui.view">
             <field name="name">compliance.config</field>
             <field name="model">res.config.settings</field>
             <field name="inherit_id" ref="base.res_config_settings_view_form"/>
@@ -22,7 +21,6 @@
                     </div>
                 </xpath>
             </field>
-        </record>
-        -->
+        </record> -->
     </data>
 </odoo> 

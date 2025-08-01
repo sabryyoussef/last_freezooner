@@ -28,6 +28,7 @@
         'wizard/document_action_confirmation_wizard.xml',
         'wizard/milestone_test_wizard.xml',
         'wizard/quick_milestone_wizard.xml',
+        'wizard/select_task_template.xml',
     ],
     'installable': True,
     'application': False,

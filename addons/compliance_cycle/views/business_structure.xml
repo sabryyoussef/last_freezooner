@@ -69,13 +69,11 @@
             </field>
         </record>
 
-        <!-- Menu Item - Commented out for now to avoid menu dependency issues -->
-        <!--
-        <menuitem id="menu_res_partner_business_structure"
+        <!-- Menu Item - Temporarily disabled due to menu parent reference issues -->
+        <!-- <menuitem id="menu_res_partner_business_structure"
                   name="Business Structures"
-                  parent="contacts.menu_contacts_root"
+                  parent="base.menu_contacts"
                   action="action_res_partner_business_structure"
-                  sequence="50"/>
-        -->
+                  sequence="50"/> -->
     </data>
 </odoo> 

@@ -60,6 +60,19 @@ class ProductTemplate(models.Model):
         for template_data in default_templates:
             template_data['product_tmpl_id'] = self.id
             self.env['product.task.template'].create(template_data)
+    
+    def action_select_existing_task_template(self):
+        """Action to select from existing task templates when adding a line"""
+        return {
+            'name': 'Select Existing Task Template',
+            'type': 'ir.actions.act_window',
+            'res_model': 'select.task.template.wizard',
+            'view_mode': 'form',
+            'context': {
+                'default_product_tmpl_id': self.id,
+            },
+            'target': 'new'
+        }
 
 class ProductProduct(models.Model):
     _inherit = 'product.product'
