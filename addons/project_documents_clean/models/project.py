@@ -150,4 +150,48 @@ class ProjectTask(models.Model):
                 'default_task_id': self.id,
                 'default_project_id': self.project_id.id,
             },
+        }
+        
+    def action_copy_checkpoints_from_template(self):
+        """Copy checkpoint configuration from the matching product task template"""
+        self.ensure_one()
+        
+        # Find matching template from sale order line
+        template = False
+        if self.sale_line_id and self.sale_line_id.product_id:
+            product = self.sale_line_id.product_id
+            template = self.env['product.task.template'].search([
+                ('product_tmpl_id', '=', product.product_tmpl_id.id),
+                ('name', '=', self.name)
+            ], limit=1)
+        
+        if not template:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Warning'),
+                    'message': _('No matching task template found for this task.'),
+                    'type': 'warning',
+                }
+            }
+            
+        # Copy checkpoints from template
+        for checkpoint_config in template.checkpoint_ids:
+            self.env['task.checkpoint'].create({
+                'task_id': self.id,
+                'name': checkpoint_config.name,
+                'stage_id': checkpoint_config.stage_id.id if checkpoint_config.stage_id else False,
+                'milestone_id': checkpoint_config.milestone_id.id if checkpoint_config.milestone_id else False,
+                'sequence': checkpoint_config.sequence,
+            })
+            
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Checkpoints copied from template successfully.'),
+                'type': 'success',
+            }
         } 
