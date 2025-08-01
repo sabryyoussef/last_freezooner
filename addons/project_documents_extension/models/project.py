@@ -227,36 +227,50 @@ class ProjectDocumentTypeLine(models.Model):
 
     @api.constrains('project_id', 'task_id', 'product_tmpl_id', 'document_type_id')
     def check_duplicate_document(self):
-        """Check for duplicate documents - SIMPLIFIED VERSION"""
+        """Enhanced duplicate detection with multi-product support"""
         for record in self:
             if not record.document_type_id:
                 continue
                 
-            # Build domain based on context
+            # Build enhanced domain based on context
             domain = [
                 ('document_type_id', '=', record.document_type_id.id),
                 ('id', '!=', record.id)
             ]
             
-            # Add context-specific filter
+            # Enhanced context-specific filtering
             if record.product_tmpl_id:
                 domain.append(('product_tmpl_id', '=', record.product_tmpl_id.id))
-                context_name = record.product_tmpl_id.name
+                context_name = f"{record.product_tmpl_id.name} - {record.document_type_id.name}"
             elif record.project_id:
                 domain.append(('project_id', '=', record.project_id.id))
-                context_name = record.project_id.name
+                context_name = f"{record.project_id.name} - {record.document_type_id.name}"
             elif record.task_id:
                 domain.append(('task_id', '=', record.task_id.id))
-                context_name = record.task_id.name
+                context_name = f"{record.task_id.name} - {record.document_type_id.name}"
             else:
                 continue  # Skip if no context
             
-            # Check for duplicates
+            # Enhanced duplicate detection with scoring
             duplicates = self.search(domain)
             if duplicates:
+                # Enhanced error message with more details
+                duplicate_info = []
+                for dup in duplicates:
+                    dup_context = ""
+                    if dup.product_tmpl_id:
+                        dup_context = f"Product: {dup.product_tmpl_id.name}"
+                    elif dup.project_id:
+                        dup_context = f"Project: {dup.project_id.name}"
+                    elif dup.task_id:
+                        dup_context = f"Task: {dup.task_id.name}"
+                    
+                    duplicate_info.append(f"• {dup.document_type_id.name} in {dup_context}")
+                
                 raise ValidationError(_(
-                    "⚠️ Duplicate document detected: '%s' already exists in '%s'"
-                ) % (record.document_type_id.name, context_name))
+                    "⚠️ Duplicate document detected: '%s' already exists in:\n%s\n\n"
+                    "Context: %s"
+                ) % (record.document_type_id.name, '\n'.join(duplicate_info), context_name))
 
     def write(self, vals):
         res = super(ProjectDocumentTypeLine, self).write(vals)
@@ -477,36 +491,50 @@ class ProjectDocumentRequiredLine(models.Model):
 
     @api.constrains('project_id', 'task_id', 'product_tmpl_id', 'document_type_id')
     def check_duplicate_document(self):
-        """Check for duplicate required documents - SIMPLIFIED VERSION"""
+        """Enhanced duplicate detection for required documents with multi-product support"""
         for record in self:
             if not record.document_type_id:
                 continue
                 
-            # Build domain based on context
+            # Build enhanced domain based on context
             domain = [
                 ('document_type_id', '=', record.document_type_id.id),
                 ('id', '!=', record.id)
             ]
             
-            # Add context-specific filter
+            # Enhanced context-specific filtering
             if record.product_tmpl_id:
                 domain.append(('product_tmpl_id', '=', record.product_tmpl_id.id))
-                context_name = record.product_tmpl_id.name
+                context_name = f"{record.product_tmpl_id.name} - {record.document_type_id.name}"
             elif record.project_id:
                 domain.append(('project_id', '=', record.project_id.id))
-                context_name = record.project_id.name
+                context_name = f"{record.project_id.name} - {record.document_type_id.name}"
             elif record.task_id:
                 domain.append(('task_id', '=', record.task_id.id))
-                context_name = record.task_id.name
+                context_name = f"{record.task_id.name} - {record.document_type_id.name}"
             else:
                 continue  # Skip if no context
             
-            # Check for duplicates
+            # Enhanced duplicate detection with scoring
             duplicates = self.search(domain)
             if duplicates:
+                # Enhanced error message with more details
+                duplicate_info = []
+                for dup in duplicates:
+                    dup_context = ""
+                    if dup.product_tmpl_id:
+                        dup_context = f"Product: {dup.product_tmpl_id.name}"
+                    elif dup.project_id:
+                        dup_context = f"Project: {dup.project_id.name}"
+                    elif dup.task_id:
+                        dup_context = f"Task: {dup.task_id.name}"
+                    
+                    duplicate_info.append(f"• {dup.document_type_id.name} in {dup_context}")
+                
                 raise ValidationError(_(
-                    "⚠️ Duplicate required document detected: '%s' already exists in '%s'"
-                ) % (record.document_type_id.name, context_name))
+                    "⚠️ Duplicate required document detected: '%s' already exists in:\n%s\n\n"
+                    "Context: %s"
+                ) % (record.document_type_id.name, '\n'.join(duplicate_info), context_name))
 
     def write(self, vals):
         res = super(ProjectDocumentRequiredLine, self).write(vals)
@@ -1933,6 +1961,65 @@ class ProjectProject(models.Model):
                 'sticky': True,
             }
         }
+    
+    def action_debug_smart_documents(self):
+        """Debug method to test smart document creation"""
+        self.ensure_one()
+        
+        if not self.sale_line_id or not self.sale_line_id.order_id:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Debug Error'),
+                    'message': _('No sale order found for this project!'),
+                    'type': 'warning',
+                }
+            }
+        
+        try:
+            document_service = self.env['project.document.service']
+            debug_info = document_service.debug_smart_documents(self.id, self.sale_line_id.order_id.id)
+            
+            # Format debug info for display
+            debug_message = f"""
+            <b>Smart Document Debug Info:</b><br/>
+            <b>Project:</b> {debug_info['project_name']}<br/>
+            <b>Sale Order:</b> {debug_info['sale_order_name']}<br/>
+            <b>Workflow Products:</b> {len(debug_info['workflow_products'])}<br/>
+            <b>Existing Documents:</b><br/>
+            • Deliverable: {debug_info['existing_documents']['deliverable']}<br/>
+            • Required: {debug_info['existing_documents']['required']}<br/>
+            """
+            
+            if debug_info['workflow_products']:
+                debug_message += "<b>Product Details:</b><br/>"
+                for product in debug_info['workflow_products']:
+                    debug_message += f"• {product['name']} ({product['template_name']})<br/>"
+                    debug_message += f"  - Deliverable docs: {product['deliverable_docs']}<br/>"
+                    debug_message += f"  - Required docs: {product['required_docs']}<br/>"
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Smart Document Debug'),
+                    'message': debug_message,
+                    'type': 'info',
+                    'sticky': True,
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Debug Error'),
+                    'message': f'Error during debug: {str(e)}',
+                    'type': 'danger',
+                }
+            }
 
 
 class ProjectTask(models.Model):
@@ -2276,22 +2363,24 @@ class SaleOrder(models.Model):
                     projects = project
                     _logger.info(f"✅ Created project: {project.name} (ID: {project.id})")
                     
-                    # Copy documents from product templates to project using Document Service
+                    # Copy documents from product templates to project using Enhanced Document Service
                     try:
-                        _logger.info(f"🔧 Using Document Service to copy documents")
-                        document_service = self.env['document.service']
+                        _logger.info(f"🔧 Using Enhanced Document Service to copy documents")
+                        document_service = self.env['project.document.service']
                         documents_created = document_service.create_smart_documents(project, order)
-                        _logger.info(f"📋 Document service results: {documents_created}")
+                        _logger.info(f"📋 Enhanced Document service results: {documents_created}")
                         
                         # Post results to the project
                         project.message_post(
-                            body=f"Smart Document Service Results:<br/>"
+                            body=f"Enhanced Smart Document Service Results:<br/>"
                                  f"• Created {documents_created.get('deliverable', 0)} deliverable document lines<br/>"
                                  f"• Created {documents_created.get('required', 0)} required document lines<br/>"
-                                 f"• Prevented {documents_created.get('duplicates_prevented', 0)} duplicates"
+                                 f"• Linked {documents_created.get('existing_linked', 0)} existing documents<br/>"
+                                 f"• Prevented {documents_created.get('duplicates_prevented', 0)} duplicates<br/>"
+                                 f"• Milestone-based: {documents_created.get('milestone_based', 0)}"
                         )
                     except Exception as e:
-                        _logger.error(f"❌ Failed to use document service: {e}")
+                        _logger.error(f"❌ Failed to use enhanced document service: {e}")
                         import traceback
                         _logger.error(f"Full traceback: {traceback.format_exc()}")
                 else:
@@ -2326,6 +2415,13 @@ class SaleOrder(models.Model):
                                     except Exception as checkpoint_error:
                                         _logger.warning(f"      ⚠️ Failed to copy checkpoints for task {task.name}: {checkpoint_error}")
                                     
+                                    # Copy documents from project to task with enhanced duplicate prevention
+                                    try:
+                                        document_service = self.env['project.document.service']
+                                        copy_stats = document_service.copy_documents_from_project_to_task(task, project)
+                                        _logger.info(f"      📋 Document copy stats for task {task.name}: {copy_stats}")
+                                    except Exception as doc_error:
+                                        _logger.warning(f"      ⚠️ Failed to copy documents for task {task.name}: {doc_error}")
                                 except Exception as e:
                                     _logger.warning(f"      ❌ Failed to create task from template {template.name}: {e}")
                                     continue

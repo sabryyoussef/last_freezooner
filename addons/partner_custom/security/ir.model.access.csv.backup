@@ -4,3 +4,5 @@ access_shareholder_data,shareholder_data,model_shareholder_data,,1,1,1,1
 access_license_activity,license_activity,model_license_activity,,1,1,1,1
 access_legal_form,legal_form,model_legal_form,,1,1,1,1
 access_partner_stage,partner_stage,model_partner_stage,,1,1,1,1
+access_partner_custom_partner_stage,partner.stage,model_partner_stage,,1,1,1,1
+access_partner_stage,partner.stage,model_partner_stage,,1,1,1,1

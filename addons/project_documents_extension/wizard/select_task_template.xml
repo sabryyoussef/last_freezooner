@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Select Task Template Wizard Form View -->
+    <record id="select_task_template_wizard_form" model="ir.ui.view">
+        <field name="name">select.task.template.wizard.form</field>
+        <field name="model">select.task.template.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Select Task Templates">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Select Existing Task Templates:</strong> Choose from existing task templates to add to this product.
+                        <br/>You can also create a new task template if needed.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="product_tmpl_id" readonly="1"/>
+                            <field name="parent_product_tmpl_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="select_templates" string="Select Templates">
+                            <group>
+                                <field name="selected_task_template_ids" 
+                                       domain="[('product_tmpl_id', '=', product_tmpl_id)]"
+                                       options="{'no_create': True}"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_create_new_template" type="object" 
+                            string="Create New Template" class="btn-secondary"/>
+                    <button name="action_select_templates" type="object" 
+                            string="Add Selected Templates" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Select Task Template Wizard -->
+    <record id="action_select_task_template_wizard" model="ir.actions.act_window">
+        <field name="name">Select Task Templates</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">select.task.template.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No task templates available
+            </p>
+            <p>
+                Create task templates first, then you can select them here.
+            </p>
+        </field>
+    </record>
+
+</odoo> 

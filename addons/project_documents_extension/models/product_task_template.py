@@ -1,44 +1,292 @@
-from odoo import api
-from odoo import models, fields
+from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
+
 
 class ProductTaskTemplate(models.Model):
+    """
+    Product Task Template Model
+    Defines task templates that will be created when a product is added to a project
+    """
     _name = 'product.task.template'
     _description = 'Product Task Template'
     _order = 'sequence, id'
 
-    name = fields.Char(string='Task Name', required=True)
-    sequence = fields.Integer(string='Sequence', default=10)
-    product_tmpl_id = fields.Many2one('product.template', string='Product Template', required=True, ondelete='cascade')
-    description = fields.Text(string='Description')
-    user_ids = fields.Many2many('res.users', string='Assignees')
-    stage_id = fields.Many2one('project.task.type', string='Initial Stage')
-    planned_hours = fields.Float(string='Planned Hours')
-    priority = fields.Selection([('0', 'Low'), ('1', 'High')], string='Priority', default='0')
-    subtask_ids = fields.One2many('product.subtask.template', 'task_template_id', string='Subtasks')
-    subtask_count = fields.Integer(string='Subtask Count', compute='_compute_subtask_count')
-    checkpoint_ids = fields.One2many(
-        'product.task.template.checkpoint', 'task_template_id', string='Reached Checkpoints'
+    # Basic Fields
+    name = fields.Char(
+        string='Task Name',
+        required=True,
+        help='Name of the task that will be created'
     )
-
+    
+    sequence = fields.Integer(
+        string='Sequence',
+        default=10,
+        help='Order in which tasks will be created'
+    )
+    
+    product_tmpl_id = fields.Many2one(
+        'product.template',
+        string='Product Template',
+        required=True,
+        ondelete='cascade',
+        help='Product template this task belongs to'
+    )
+    
+    # Task Configuration
+    description = fields.Text(
+        string='Description',
+        help='Task description that will be set when task is created'
+    )
+    
+    user_ids = fields.Many2many(
+        'res.users',
+        'product_task_template_user_rel',
+        'template_id',
+        'user_id',
+        string='Assignees',
+        help='Users who will be assigned to this task'
+    )
+    
+    stage_id = fields.Many2one(
+        'project.task.type',
+        string='Initial Stage',
+        help='Initial stage for the task when created'
+    )
+    
+    # Checkpoint Configuration
+    checkpoint_field = fields.Selection([
+        ('is_complete_return_required', 'Required Document Complete'),
+        ('is_complete_return_deliverable', 'Deliverable Document Complete'),
+        ('is_complete_return_hand', 'Handover Complete'),
+        ('is_complete_return_compliance', 'Compliance Complete'),
+        ('is_complete_return_partner_fields', 'Partner Fields Complete'),
+        ('is_confirm_required', 'Required Document Confirm'),
+        ('is_confirm_deliverable', 'Deliverable Document Confirm'),
+        ('is_confirm_hand', 'Handover Confirm'),
+        ('is_confirm_compliance', 'Compliance Confirm'),
+        ('is_confirm_partner_fields', 'Partner Fields Confirm'),
+        ('is_update_required', 'Update Required Document'),
+        ('is_update_deliverable', 'Update Deliverable Document'),
+        ('is_update_hand', 'Update Handover'),
+        ('is_update_compliance', 'Update Compliance'),
+        ('is_update_partner_fields', 'Update Partner Fields'),
+    ], string='Checkpoint Field', help='Select a checkpoint field that will act as a boolean checkpoint for individual tasks')
+    
+    milestone_message = fields.Text(
+        string='Milestone Message',
+        help='Message to log when checkpoint is reached'
+    )
+    
+    reached_checkpoint_ids = fields.Many2many(
+        'reached.checkpoint',
+        'product_task_template_checkpoint_rel',
+        'task_template_id',
+        'checkpoint_id',
+        string='Reached Checkpoints',
+        help='Checkpoints that have been reached for this task template'
+    )
+    milestone_id = fields.Many2one(
+        'project.milestone',
+        string='Milestone',
+        help='Milestone associated with this task template'
+    )
+    
+    # Checkpoint Configuration
+    checkpoint_ids = fields.One2many(
+        'product.task.template.checkpoint',
+        'task_template_id',
+        string='Checkpoints',
+        help='Checkpoint configuration for this task template'
+    )
+    
+    # Subtask Configuration
+    subtask_ids = fields.One2many(
+        'product.subtask.template',
+        'task_template_id',
+        string='Subtasks',
+        help='Subtasks that will be created under this task'
+    )
+    
+    # Additional Configuration
+    planned_hours = fields.Float(
+        string='Planned Hours',
+        help='Estimated hours for this task'
+    )
+    
+    priority = fields.Selection([
+        ('0', 'Low'),
+        ('1', 'High')
+    ], string='Priority', default='0')
+    
+    # Computed Fields
+    subtask_count = fields.Integer(
+        string='Subtasks Count',
+        compute='_compute_subtask_count',
+        store=True
+    )
+    
+    @api.depends('subtask_ids')
     def _compute_subtask_count(self):
+        """Compute the number of subtasks"""
         for template in self:
             template.subtask_count = len(template.subtask_ids)
+    
+    def action_view_subtasks(self):
+        """Action to view subtasks of this template"""
+        self.ensure_one()
+        return {
+            'name': _('Subtasks'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.subtask.template',
+            'view_mode': 'list,form',
+            'domain': [('task_template_id', '=', self.id)],
+            'context': {
+                'default_task_template_id': self.id,
+                'default_name': f"{self.name} - Subtask"
+            }
+        }
+    
+    def action_open_subtasks_inline(self):
+        """Action to open subtasks inline within the task template form"""
+        self.ensure_one()
+        return {
+            'name': _('Subtasks'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.subtask.template',
+            'view_mode': 'list,form',
+            'domain': [('task_template_id', '=', self.id)],
+            'context': {
+                'default_task_template_id': self.id,
+                'default_name': f"{self.name} - Subtask",
+                'form_view_initial_mode': 'edit'
+            },
+            'target': 'new'
+        }
+    
+    def action_open_subtasks_from_product(self):
+        """Action to open subtasks from product form context"""
+        self.ensure_one()
+        return {
+            'name': _('Subtasks'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.subtask.template',
+            'view_mode': 'list,form',
+            'domain': [('task_template_id', '=', self.id)],
+            'context': {
+                'default_task_template_id': self.id,
+                'default_name': f"{self.name} - Subtask",
+                'form_view_initial_mode': 'edit'
+            },
+            'target': 'new'
+        }
+    
+    def action_select_existing_task_template(self):
+        """Action to select from existing task templates when adding a line"""
+        return {
+            'name': _('Select Existing Task Template'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'select.task.template.wizard',
+            'view_mode': 'form',
+            'context': {
+                'default_product_tmpl_id': self.product_tmpl_id.id,
+            },
+            'target': 'new'
+        }
+
 
 class ProductSubtaskTemplate(models.Model):
+    """
+    Product Subtask Template Model
+    Defines subtask templates that will be created under parent tasks
+    """
     _name = 'product.subtask.template'
     _description = 'Product Subtask Template'
     _order = 'sequence, id'
 
-    name = fields.Char(string='Subtask Name', required=True)
-    sequence = fields.Integer(string='Sequence', default=10)
-    task_template_id = fields.Many2one('product.task.template', string='Parent Task Template', required=True, ondelete='cascade')
-    description = fields.Text(string='Description')
-    user_ids = fields.Many2many('res.users', string='Assignees')
-    stage_id = fields.Many2one('project.task.type', string='Initial Stage')
-    planned_hours = fields.Float(string='Planned Hours')
-    priority = fields.Selection([('0', 'Low'), ('1', 'High')], string='Priority', default='0')
-    milestone_message = fields.Text(string='Milestone Message')
+    # Basic Fields
+    name = fields.Char(
+        string='Subtask Name',
+        required=True,
+        help='Name of the subtask that will be created'
+    )
+    
+    sequence = fields.Integer(
+        string='Sequence',
+        default=10,
+        help='Order in which subtasks will be created'
+    )
+    
+    task_template_id = fields.Many2one(
+        'product.task.template',
+        string='Parent Task Template',
+        required=True,
+        ondelete='cascade',
+        help='Parent task template this subtask belongs to'
+    )
+    
+    # Subtask Configuration
+    description = fields.Text(
+        string='Description',
+        help='Subtask description that will be set when subtask is created'
+    )
+    
+    user_ids = fields.Many2many(
+        'res.users',
+        'product_subtask_template_user_rel',
+        'template_id',
+        'user_id',
+        string='Assignees',
+        help='Users who will be assigned to this subtask'
+    )
+    
+    stage_id = fields.Many2one(
+        'project.task.type',
+        string='Initial Stage',
+        help='Initial stage for the subtask when created'
+    )
+    
+    # Milestone Configuration
+    milestone_message = fields.Text(
+        string='Milestone Message',
+        help='Message to log when this subtask is completed'
+    )
+    
+    # Additional Configuration
+    planned_hours = fields.Float(
+        string='Planned Hours',
+        help='Estimated hours for this subtask'
+    )
+    
+    priority = fields.Selection([
+        ('0', 'Low'),
+        ('1', 'High')
+    ], string='Priority', default='0')
+    
+    # Dependencies (for future enhancement)
+    depends_on_subtask_ids = fields.Many2many(
+        'product.subtask.template',
+        'subtask_dependency_rel',
+        'subtask_id',
+        'depends_on_id',
+        string='Depends On',
+        help='Subtasks that must be completed before this one can start'
+    )
+    
+    @api.model
+    def create(self, vals):
+        """Override create to ensure proper naming"""
+        if 'name' not in vals or not vals['name']:
+            task_template = self.env['product.task.template'].browse(vals.get('task_template_id'))
+            if task_template:
+                vals['name'] = f"{task_template.name} - Subtask"
+        
+        _logger.info(f"Creating subtask with vals: {vals}")
+        result = super().create(vals)
+        _logger.info(f"Created subtask: {result.name} (ID: {result.id})")
+        return result
 
 class ProductTaskTemplateCheckpoint(models.Model):
     _name = 'product.task.template.checkpoint'
