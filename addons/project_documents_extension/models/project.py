@@ -2422,7 +2422,6 @@ class SaleOrder(models.Model):
                                         _logger.info(f"      📋 Document copy stats for task {task.name}: {copy_stats}")
                                     except Exception as doc_error:
                                         _logger.warning(f"      ⚠️ Failed to copy documents for task {task.name}: {doc_error}")
-                                    
                                 except Exception as e:
                                     _logger.warning(f"      ❌ Failed to create task from template {template.name}: {e}")
                                     continue
