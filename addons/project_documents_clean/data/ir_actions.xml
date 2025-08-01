@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Server Action for Create Task Templates -->
+        <record id="action_create_task_templates" model="ir.actions.server">
+            <field name="name">Create Default Task Templates</field>
+            <field name="model_id" ref="product.model_product_template"/>
+            <field name="binding_model_id" ref="product.model_product_template"/>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.action_create_task_templates()
+            </field>
+        </record>
+    </data>
+</odoo>
