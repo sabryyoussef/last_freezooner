@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Inherit Task Form View -->
+        <record id="view_task_form_inherit_checkpoints" model="ir.ui.view">
+            <field name="name">project.task.form.inherit.checkpoints</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_form2"/>
+            <field name="arch" type="xml">
+                <!-- Add Extra Info page -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Extra Info" name="extra_info">
+                        <group>
+                            <group string="Checkpoint Information">
+                                <field name="checkpoint_ids" widget="one2many_list">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="stage_id"/>
+                                        <field name="milestone_id"/>
+                                        <field name="reached_date"/>
+                                        <field name="reached_by"/>
+                                    </tree>
+                                </field>
+                            </group>
+                            <group string="History">
+                                <field name="checkpoint_history_ids" readonly="1">
+                                    <tree>
+                                        <field name="checkpoint_name"/>
+                                        <field name="status"/>
+                                        <field name="date"/>
+                                        <field name="user_id"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
