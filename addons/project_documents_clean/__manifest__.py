@@ -30,6 +30,7 @@
         'data/ir_actions.xml',
         'views/task_template_views.xml',
         'views/product_views.xml',
+        'views/checkpoint_views.xml',
         # 'views/document_tag_views.xml',  # Temporarily disabled for testing
     ],
     'demo': [
