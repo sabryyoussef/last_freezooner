@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo Work Locations -->
+        <record id="demo_work_location_1" model="hr.work.location">
+            <field name="name">Main Office</field>
+            <field name="address_id" ref="base.main_company"/>
+        </record>
+
+        <record id="demo_work_location_2" model="hr.work.location">
+            <field name="name">Branch Office</field>
+            <field name="address_id" ref="base.main_company"/>
+        </record>
+
+        <!-- Demo License Authorities -->
+        <record id="demo_license_authority_1" model="product.attribute.value">
+            <field name="name">Ministry of Commerce</field>
+            <field name="attribute_id" ref="product.product_attribute_1"/>
+        </record>
+
+        <record id="demo_license_authority_2" model="product.attribute.value">
+            <field name="name">Customs Authority</field>
+            <field name="attribute_id" ref="product.product_attribute_1"/>
+        </record>
+
+        <record id="demo_license_authority_3" model="product.attribute.value">
+            <field name="name">Municipality</field>
+            <field name="attribute_id" ref="product.product_attribute_1"/>
+        </record>
+
+        <!-- Demo Cabinet Directories -->
+        <record id="demo_cabinet_1" model="cabinet.directory">
+            <field name="name">Legal Documents Cabinet</field>
+            <field name="work_location_id" ref="demo_work_location_1"/>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+
+        <record id="demo_cabinet_2" model="cabinet.directory">
+            <field name="name">Financial Documents Cabinet</field>
+            <field name="work_location_id" ref="demo_work_location_1"/>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+
+        <record id="demo_cabinet_3" model="cabinet.directory">
+            <field name="name">Client Files Cabinet</field>
+            <field name="work_location_id" ref="demo_work_location_2"/>
+            <field name="user_id" ref="base.user_admin"/>
+        </record>
+
+        <!-- Demo Directory Folders -->
+        <record id="demo_folder_1" model="directory.folder">
+            <field name="name">Contracts and Agreements</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="cabinet_id" ref="demo_cabinet_1"/>
+            <field name="license_authority_id" ref="demo_license_authority_1"/>
+        </record>
+
+        <record id="demo_folder_2" model="directory.folder">
+            <field name="name">Licenses and Permits</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="cabinet_id" ref="demo_cabinet_1"/>
+            <field name="license_authority_id" ref="demo_license_authority_2"/>
+        </record>
+
+        <record id="demo_folder_3" model="directory.folder">
+            <field name="name">Financial Reports</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="cabinet_id" ref="demo_cabinet_2"/>
+            <field name="license_authority_id" ref="demo_license_authority_3"/>
+        </record>
+
+        <record id="demo_folder_4" model="directory.folder">
+            <field name="name">Client Contracts</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="cabinet_id" ref="demo_cabinet_3"/>
+            <field name="license_authority_id" ref="demo_license_authority_1"/>
+        </record>
+
+        <!-- Demo Attachments for Sub Folders -->
+        <record id="demo_attachment_sub_1" model="ir.attachment">
+            <field name="name">contract_document.pdf</field>
+            <field name="datas" eval="b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='"/>
+            <field name="mimetype">application/pdf</field>
+            <field name="res_model">sub.folder.files</field>
+        </record>
+
+        <record id="demo_attachment_sub_2" model="ir.attachment">
+            <field name="name">license_document.pdf</field>
+            <field name="datas" eval="b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='"/>
+            <field name="mimetype">application/pdf</field>
+            <field name="res_model">sub.folder.files</field>
+        </record>
+
+        <record id="demo_attachment_sub_3" model="ir.attachment">
+            <field name="name">financial_report.pdf</field>
+            <field name="datas" eval="b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='"/>
+            <field name="mimetype">application/pdf</field>
+            <field name="res_model">sub.folder.files</field>
+        </record>
+
+        <record id="demo_attachment_sub_4" model="ir.attachment">
+            <field name="name">client_agreement.pdf</field>
+            <field name="datas" eval="b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='"/>
+            <field name="mimetype">application/pdf</field>
+            <field name="res_model">sub.folder.files</field>
+        </record>
+
+        <!-- Demo Sub Folder Files -->
+        <record id="demo_sub_folder_1" model="sub.folder.files">
+            <field name="name">ACME Corporation Contract</field>
+            <field name="lead_id" ref="crm.crm_case_1"/>
+            <field name="partner_id" ref="base.res_partner_1"/>
+            <field name="folder_id" ref="demo_folder_1"/>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="state">on_file</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_sub_1')])]"/>
+        </record>
+
+        <record id="demo_sub_folder_2" model="sub.folder.files">
+            <field name="name">Business License Application</field>
+            <field name="lead_id" ref="crm.crm_case_2"/>
+            <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="folder_id" ref="demo_folder_2"/>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="state">on_file</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_sub_2')])]"/>
+        </record>
+
+        <record id="demo_sub_folder_3" model="sub.folder.files">
+            <field name="name">Q4 Financial Report</field>
+            <field name="lead_id" ref="crm.crm_case_3"/>
+            <field name="partner_id" ref="base.res_partner_1"/>
+            <field name="folder_id" ref="demo_folder_3"/>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="state">handed</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_sub_3')])]"/>
+        </record>
+
+        <record id="demo_sub_folder_4" model="sub.folder.files">
+            <field name="name">Tech Solutions Agreement</field>
+            <field name="lead_id" ref="crm.crm_case_4"/>
+            <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="folder_id" ref="demo_folder_4"/>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="state">on_file</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_sub_4')])]"/>
+        </record>
+
+        <record id="demo_sub_folder_5" model="sub.folder.files">
+            <field name="name">Import License</field>
+            <field name="lead_id" ref="crm.crm_case_5"/>
+            <field name="partner_id" ref="base.res_partner_1"/>
+            <field name="folder_id" ref="demo_folder_2"/>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="state">on_file</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_sub_2')])]"/>
+        </record>
+
+        <record id="demo_sub_folder_6" model="sub.folder.files">
+            <field name="name">Annual Tax Report</field>
+            <field name="lead_id" ref="crm.crm_case_6"/>
+            <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="folder_id" ref="demo_folder_3"/>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="state">handed</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_sub_3')])]"/>
+        </record>
+    </data>
+</odoo> 

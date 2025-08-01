@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo Document Categories -->
+        <record id="demo_document_category_1" model="res.partner.document.category">
+            <field name="name">Legal Documents</field>
+        </record>
+
+        <record id="demo_document_category_2" model="res.partner.document.category">
+            <field name="name">Licenses</field>
+        </record>
+
+        <!-- Demo Document Types -->
+        <record id="demo_document_type_1" model="res.partner.document.type">
+            <field name="name">Contract Agreement</field>
+            <field name="category_id" ref="demo_document_category_1"/>
+        </record>
+
+        <record id="demo_document_type_2" model="res.partner.document.type">
+            <field name="name">License Certificate</field>
+            <field name="category_id" ref="demo_document_category_2"/>
+        </record>
+
+        <record id="demo_document_type_3" model="res.partner.document.type">
+            <field name="name">Insurance Policy</field>
+            <field name="category_id" ref="demo_document_category_1"/>
+        </record>
+
+        <!-- Demo Attachments for Documents -->
+        <record id="demo_attachment_1" model="ir.attachment">
+            <field name="name">sample_contract.pdf</field>
+            <field name="datas" eval="b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='"/>
+            <field name="mimetype">application/pdf</field>
+            <field name="res_model">res.partner.document</field>
+        </record>
+
+        <record id="demo_attachment_2" model="ir.attachment">
+            <field name="name">license_certificate.pdf</field>
+            <field name="datas" eval="b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='"/>
+            <field name="mimetype">application/pdf</field>
+            <field name="res_model">res.partner.document</field>
+        </record>
+
+        <record id="demo_attachment_3" model="ir.attachment">
+            <field name="name">insurance_policy.pdf</field>
+            <field name="datas" eval="b'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='"/>
+            <field name="mimetype">application/pdf</field>
+            <field name="res_model">res.partner.document</field>
+        </record>
+
+        <!-- Demo Client Documents -->
+        <record id="demo_client_document_1" model="res.partner.document">
+            <field name="name">Sample Contract Agreement</field>
+            <field name="partner_id" ref="base.res_partner_1"/>
+            <field name="type_id" ref="demo_document_type_1"/>
+            <field name="category_id" ref="demo_document_category_1"/>
+            <field name="expiration_date">2025-12-31</field>
+            <field name="issue_date">2025-01-01</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_1')])]"/>
+        </record>
+
+        <record id="demo_client_document_2" model="res.partner.document">
+            <field name="name">License Certificate</field>
+            <field name="partner_id" ref="base.res_partner_2"/>
+            <field name="type_id" ref="demo_document_type_2"/>
+            <field name="category_id" ref="demo_document_category_2"/>
+            <field name="expiration_date">2025-10-31</field>
+            <field name="issue_date">2025-01-01</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_2')])]"/>
+        </record>
+
+        <record id="demo_client_document_3" model="res.partner.document">
+            <field name="name">Insurance Policy</field>
+            <field name="partner_id" ref="base.res_partner_1"/>
+            <field name="type_id" ref="demo_document_type_3"/>
+            <field name="category_id" ref="demo_document_category_1"/>
+            <field name="expiration_date">2026-07-01</field>
+            <field name="issue_date">2025-01-01</field>
+            <field name="attachment_ids" eval="[(6, 0, [ref('demo_attachment_3')])]"/>
+        </record>
+    </data>
+</odoo>

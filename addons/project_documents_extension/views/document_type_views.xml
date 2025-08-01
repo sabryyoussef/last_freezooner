@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Project Document Type Views -->
+    <record id="view_project_document_type_tree" model="ir.ui.view">
+        <field name="name">project.document.type.tree</field>
+        <field name="model">project.document.type</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="category_id"/>
+                <field name="is_required"/>
+                <field name="description"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_project_document_type_form" model="ir.ui.view">
+        <field name="name">project.document.type.form</field>
+        <field name="model">project.document.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="category_id"/>
+                        </group>
+                        <group>
+                            <field name="is_required"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Describe this document type..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Project Document Category Views -->
+    <record id="view_project_document_category_tree" model="ir.ui.view">
+        <field name="name">project.document.category.tree</field>
+        <field name="model">project.document.category</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="description"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_project_document_category_form" model="ir.ui.view">
+        <field name="name">project.document.category.form</field>
+        <field name="model">project.document.category</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                    </group>
+                    <notebook>
+                        <page string="Document Types">
+                            <field name="document_type_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="is_required"/>
+                                    <field name="description"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_project_document_type" model="ir.actions.act_window">
+        <field name="name">Document Types</field>
+        <field name="res_model">project.document.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a document type
+            </p>
+            <p>
+                Document types define what kinds of documents can be required or deliverable in projects.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_project_document_category" model="ir.actions.act_window">
+        <field name="name">Document Categories</field>
+        <field name="res_model">project.document.category</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a document category
+            </p>
+            <p>
+                Document categories help organize different types of documents.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_project_documents_root" 
+              name="Project Documents" 
+              parent="project.menu_project_config" 
+              sequence="10"/>
+
+    <menuitem id="menu_project_document_types" 
+              name="Document Types" 
+              parent="menu_project_documents_root" 
+              action="action_project_document_type" 
+              sequence="10"/>
+
+    <menuitem id="menu_project_document_categories" 
+              name="Document Categories" 
+              parent="menu_project_documents_root" 
+              action="action_project_document_category" 
+              sequence="20"/>
+</odoo> 

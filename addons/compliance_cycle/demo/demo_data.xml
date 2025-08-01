@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo Partner with Compliance Data -->
+        <record id="demo_partner_compliance" model="res.partner">
+            <field name="name">Demo Compliance Partner</field>
+            <field name="is_company" eval="True"/>
+            <field name="company_type" eval="'company'"/>
+            <field name="business_structure_id" ref="business_structure_llc"/>
+            <field name="compliance_status">in_progress</field>
+            <field name="compliance_notes">Demo compliance partner for testing purposes.</field>
+        </record>
+
+        <!-- Demo Address for Partner -->
+        <record id="demo_partner_address" model="res.partner.address">
+            <field name="name">Main Office</field>
+            <field name="partner_id" ref="demo_partner_compliance"/>
+            <field name="type">work</field>
+            <field name="street">123 Demo Street</field>
+            <field name="city">Demo City</field>
+            <field name="zip">12345</field>
+            <field name="is_primary" eval="True"/>
+        </record>
+
+        <!-- Demo Shareholder -->
+        <record id="demo_shareholder" model="res.partner.business.shareholder">
+            <field name="name">John Demo</field>
+            <field name="partner_id" ref="demo_partner_compliance"/>
+            <field name="shareholding" eval="60.0"/>
+            <field name="notes">Majority shareholder</field>
+        </record>
+    </data>
+</odoo> 

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Handover checkpoints -->
+        <record id="reached_checkpoint_handover_complete" model="reached.checkpoint">
+            <field name="name">Handover Complete</field>
+        </record>
+        <record id="reached_checkpoint_handover_confirm" model="reached.checkpoint">
+            <field name="name">Handover Confirm</field>
+        </record>
+        <record id="reached_checkpoint_update_handover" model="reached.checkpoint">
+            <field name="name">Update Handover</field>
+        </record>
+
+        <!-- Compliance checkpoints -->
+        <record id="reached_checkpoint_compliance_complete" model="reached.checkpoint">
+            <field name="name">Compliance Complete</field>
+        </record>
+        <record id="reached_checkpoint_compliance_confirm" model="reached.checkpoint">
+            <field name="name">Compliance Confirm</field>
+        </record>
+        <record id="reached_checkpoint_update_compliance" model="reached.checkpoint">
+            <field name="name">Update Compliance</field>
+        </record>
+
+        <!-- Required document checkpoints -->
+        <record id="reached_checkpoint_required_complete" model="reached.checkpoint">
+            <field name="name">Required Document Complete</field>
+        </record>
+        <record id="reached_checkpoint_required_confirm" model="reached.checkpoint">
+            <field name="name">Required Document Confirm</field>
+        </record>
+        <record id="reached_checkpoint_update_required" model="reached.checkpoint">
+            <field name="name">Update Required Document</field>
+        </record>
+
+        <!-- Deliverable document checkpoints -->
+        <record id="reached_checkpoint_deliverable_complete" model="reached.checkpoint">
+            <field name="name">Deliverable Document Complete</field>
+        </record>
+        <record id="reached_checkpoint_deliverable_confirm" model="reached.checkpoint">
+            <field name="name">Deliverable Document Confirm</field>
+        </record>
+        <record id="reached_checkpoint_update_deliverable" model="reached.checkpoint">
+            <field name="name">Update Deliverable Document</field>
+        </record>
+
+        <!-- Partner fields checkpoints -->
+        <record id="reached_checkpoint_partner_fields_complete" model="reached.checkpoint">
+            <field name="name">Partner Fields Complete</field>
+        </record>
+        <record id="reached_checkpoint_partner_fields_confirm" model="reached.checkpoint">
+            <field name="name">Partner Fields Confirm</field>
+        </record>
+        <record id="reached_checkpoint_update_partner_fields" model="reached.checkpoint">
+            <field name="name">Update Partner Fields</field>
+        </record>
+
+        <!-- Additional checkpoints -->
+        <record id="reached_checkpoint_document_collection_complete" model="reached.checkpoint">
+            <field name="name">Document Collection Complete</field>
+        </record>
+        <record id="reached_checkpoint_process_complete" model="reached.checkpoint">
+            <field name="name">Process Complete</field>
+        </record>
+    </data>
+</odoo> 
