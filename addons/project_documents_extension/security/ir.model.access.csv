@@ -23,3 +23,5 @@ access_select_task_template_wizard_user,select.task.template.wizard.user,model_s
 access_task_document_required_lines,task.document.required.lines,model_task_document_required_lines,base.group_user,1,1,1,1
 access_product_template_required_documents,product.template.required.documents,model_product_template_required_documents,base.group_user,1,1,1,1
 access_checkpoint_history,checkpoint.history,model_checkpoint_history,base.group_user,1,1,1,1
+access_project_required_document_user,project.required.document,model_project_required_document,base.group_user,1,1,1,1
+access_project_deliverable_document_user,project.deliverable.document,model_project_deliverable_document,base.group_user,1,1,1,1

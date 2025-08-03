@@ -2,18 +2,18 @@
 <odoo>
     <data noupdate="1">
         
-        <!-- Sequences for document numbering -->
-        <record id="seq_project_document_type_line" model="ir.sequence">
-            <field name="name">Project Document Type Line</field>
-            <field name="code">project.document.type.line</field>
-            <field name="prefix">DOC</field>
+        <!-- Sequences for document numbering - Updated for documents module integration -->
+        <record id="seq_project_required_document" model="ir.sequence">
+            <field name="name">Project Required Document</field>
+            <field name="code">project.required.document</field>
+            <field name="prefix">REQ</field>
             <field name="padding">5</field>
         </record>
 
-        <record id="seq_project_document_required_line" model="ir.sequence">
-            <field name="name">Project Document Required Line</field>
-            <field name="code">project.document.required.line</field>
-            <field name="prefix">REQ</field>
+        <record id="seq_project_deliverable_document" model="ir.sequence">
+            <field name="name">Project Deliverable Document</field>
+            <field name="code">project.deliverable.document</field>
+            <field name="prefix">DEL</field>
             <field name="padding">5</field>
         </record>
 
