@@ -33,6 +33,13 @@ class ProductTemplate(models.Model):
         'project.document.type.line', 'product_tmpl_id', string='Deliverable Document Types'
     )
 
+    x_required_document_ids = fields.One2many(
+        'project.required.document', 'product_tmpl_id', string='x_Required Documents'
+    )
+    x_deliverable_document_ids = fields.One2many(
+        'project.deliverable.document', 'product_tmpl_id', string='x_Deliverable Documents'
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
         templates = super().create(vals_list)
