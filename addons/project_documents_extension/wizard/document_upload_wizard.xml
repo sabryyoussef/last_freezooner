@@ -5,11 +5,32 @@
         <field name="arch" type="xml">
             <form string="Upload Document">
                 <group>
-                    <field name="project_id"/>
-                    <field name="user_id"/>
-                    <field name="name"/>
-                    <field name="document_type"/>
-                    <field name="comment"/>
+                    <group string="Basic Information">
+                        <field name="project_id"/>
+                        <field name="user_id"/>
+                        <field name="name"/>
+                        <field name="document_type"/>
+                        <field name="attachment" filename="attachment_filename"/>
+                        <field name="attachment_filename" invisible="1"/>
+                        <field name="comment"/>
+                    </group>
+                    <group string="Document Settings">
+                        <field name="folder_id"/>
+                        <field name="contact_id"/>
+                        <field name="tag_ids" widget="many2many_tags"/>
+                        <field name="company_id"/>
+                        <field name="number"/>
+                        <field name="is_verified"/>
+                    </group>
+                </group>
+                <group>
+                    <group string="File Information">
+                        <field name="file_size"/>
+                        <field name="mimetype"/>
+                    </group>
+                    <group string="Additional Options">
+                        <field name="create_activity"/>
+                    </group>
                 </group>
                 <footer>
                     <button name="action_upload" type="object" string="Upload" class="btn-primary"/>
@@ -25,5 +46,6 @@
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_document_upload_wizard_form"/>
         <field name="target">new</field>
+        <field name="context">{}</field>
     </record>
 </odoo> 

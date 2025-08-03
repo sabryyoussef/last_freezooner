@@ -273,29 +273,88 @@ class ProjectDocumentTypeLine(models.Model):
                 ) % (record.document_type_id.name, '\n'.join(duplicate_info), context_name))
 
     def write(self, vals):
+        _logger.info(f"📝 Write called for ProjectDocumentTypeLine with vals: {vals}")
         res = super(ProjectDocumentTypeLine, self).write(vals)
         if vals.get('expiry_date'):
             self.write({'expiration_reminder_sent': False})
         if vals.get('attachment_ids'):
+            _logger.info(f"📎 Attachment_ids detected: {vals.get('attachment_ids')}")
             self.write({'document_create_date': fields.Datetime.today()})
+            # Convert new attachments to documents
+            self._convert_attachments_to_documents()
         return res
+    
+    def _convert_attachments_to_documents(self):
+        """Convert attachments to documents and place them in project folder"""
+        for record in self:
+            if not record.project_id:
+                continue
+                
+            _logger.info(f"🔄 Converting attachments to documents for {record.document_type_id.name}")
+            
+            # Ensure project has a folder
+            record.project_id._ensure_project_folder()
+            
+            for attachment in record.attachment_ids:
+                # Check if this attachment is already converted to a document
+                existing_doc = self.env['documents.document'].search([
+                    ('attachment_id', '=', attachment.id)
+                ], limit=1)
+                
+                if existing_doc:
+                    _logger.info(f"📄 Attachment {attachment.name} already converted to document {existing_doc.id}")
+                    continue
+                
+                try:
+                    # Create document from attachment
+                    document_vals = {
+                        'name': attachment.name,
+                        'attachment_id': attachment.id,
+                        'res_model': 'project.project',
+                        'res_id': record.project_id.id,
+                        'type': 'file',
+                    }
+                    
+                    # Add folder if project has one
+                    if record.project_id.documents_folder_id:
+                        document_vals['folder_id'] = record.project_id.documents_folder_id.id
+                    
+                    document = self.env['documents.document'].create(document_vals)
+                    _logger.info(f"✅ Converted attachment '{attachment.name}' to document {document.id}")
+                    
+                    # Update the document line with the created document
+                    if not record.document_id:
+                        record.document_id = document.id
+                        _logger.info(f"🔗 Linked document {document.id} to document line {record.id}")
+                    
+                except Exception as e:
+                    _logger.error(f"❌ Failed to convert attachment '{attachment.name}' to document: {e}")
 
     def action_upload_document(self):
         """Action to upload document for this line"""
         self.ensure_one()
+        _logger.info(f"🔥🔥🔥 ACTION_UPLOAD_DOCUMENT BUTTON CLICKED for line {self.id}")
+        _logger.info(f"🚀🚀🚀 Upload document action triggered for document line {self.id} (type: {self.document_type_id.name})")
+        
+        context = {
+            'default_name': self.document_type_id.name,
+            'default_document_type': 'deliverable' if self.project_id else 'required',
+            'default_project_id': self.project_id.id if self.project_id else False,
+            'default_task_id': self.task_id.id if self.task_id else False,
+            'default_document_line_id': self.id,
+            'default_user_id': self.env.user.id,
+        }
+        
+        _logger.info(f"📋 Context for wizard: {context}")
+        _logger.info(f"🎯 RETURNING WIZARD ACTION: document.upload.wizard")
+        
         return {
             'name': _('Upload Document'),
             'type': 'ir.actions.act_window',
             'res_model': 'document.upload.wizard',
             'view_mode': 'form',
             'target': 'new',
-            'context': {
-                'default_name': self.document_type_id.name,
-                'default_document_type': 'deliverable' if self.project_id else 'required',
-                'default_project_id': self.project_id.id if self.project_id else False,
-                'default_task_id': self.task_id.id if self.task_id else False,
-                'default_document_line_id': self.id,
-            }
+            'context': context,
         }
 
     def _trigger_duplicate_popup(self, message):
@@ -316,6 +375,53 @@ class ProjectDocumentTypeLine(models.Model):
         except Exception as e:
             _logger.error(f"Error triggering duplicate popup: {str(e)}")
             return False
+    
+    def action_convert_attachments_to_documents(self):
+        """Manual action to convert attachments to documents"""
+        self.ensure_one()
+        _logger.info(f"🔧 Manual conversion triggered for document line {self.id}")
+        self._convert_attachments_to_documents()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Attachments converted to documents successfully'),
+                'type': 'success',
+            }
+        }
+    
+    def action_save_and_convert_attachments(self):
+        """Save the record and convert attachments"""
+        self.ensure_one()
+        _logger.info(f"💾 Save and convert triggered for document line {self.id}")
+        
+        # Save the record first
+        self.write({})
+        
+        # Then convert attachments
+        if self.attachment_ids:
+            _logger.info(f"📎 Found {len(self.attachment_ids)} attachments to convert")
+            self._convert_attachments_to_documents()
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Success'),
+                    'message': _(f'Converted {len(self.attachment_ids)} attachments to documents'),
+                    'type': 'success',
+                }
+            }
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Info'),
+                    'message': _('No attachments found to convert'),
+                    'type': 'info',
+                }
+            }
 
 
 class ProjectDocumentRequiredLine(models.Model):
@@ -537,30 +643,133 @@ class ProjectDocumentRequiredLine(models.Model):
                 ) % (record.document_type_id.name, '\n'.join(duplicate_info), context_name))
 
     def write(self, vals):
+        _logger.info(f"📝 Write called for ProjectDocumentRequiredLine with vals: {vals}")
         res = super(ProjectDocumentRequiredLine, self).write(vals)
         if vals.get('expiry_date'):
             self.write({'expiration_reminder_sent': False})
         if vals.get('attachment_ids'):
+            _logger.info(f"📎 Attachment_ids detected: {vals.get('attachment_ids')}")
             self.write({'document_create_date': fields.Datetime.today()})
+            # Convert new attachments to documents
+            self._convert_attachments_to_documents()
         return res
+    
+    def _convert_attachments_to_documents(self):
+        """Convert attachments to documents and place them in project folder"""
+        for record in self:
+            if not record.project_id:
+                continue
+                
+            _logger.info(f"🔄 Converting attachments to documents for {record.document_type_id.name}")
+            
+            # Ensure project has a folder
+            record.project_id._ensure_project_folder()
+            
+            for attachment in record.attachment_ids:
+                # Check if this attachment is already converted to a document
+                existing_doc = self.env['documents.document'].search([
+                    ('attachment_id', '=', attachment.id)
+                ], limit=1)
+                
+                if existing_doc:
+                    _logger.info(f"📄 Attachment {attachment.name} already converted to document {existing_doc.id}")
+                    continue
+                
+                try:
+                    # Create document from attachment
+                    document_vals = {
+                        'name': attachment.name,
+                        'attachment_id': attachment.id,
+                        'res_model': 'project.project',
+                        'res_id': record.project_id.id,
+                        'type': 'file',
+                    }
+                    
+                    # Add folder if project has one
+                    if record.project_id.documents_folder_id:
+                        document_vals['folder_id'] = record.project_id.documents_folder_id.id
+                    
+                    document = self.env['documents.document'].create(document_vals)
+                    _logger.info(f"✅ Converted attachment '{attachment.name}' to document {document.id}")
+                    
+                    # Update the document line with the created document
+                    if not record.document_id:
+                        record.document_id = document.id
+                        _logger.info(f"🔗 Linked document {document.id} to document line {record.id}")
+                    
+                except Exception as e:
+                    _logger.error(f"❌ Failed to convert attachment '{attachment.name}' to document: {e}")
 
     def action_upload_document(self):
         """Action to upload document for this line"""
         self.ensure_one()
+        _logger.info(f"🚀 Upload document action triggered for required document line {self.id} (type: {self.document_type_id.name})")
+        
+        context = {
+            'default_name': self.document_type_id.name,
+            'default_document_type': 'required',
+            'default_project_id': self.project_id.id if self.project_id else False,
+            'default_task_id': self.task_id.id if self.task_id else False,
+            'default_document_line_id': self.id,
+        }
+        
+        _logger.info(f"📋 Context for wizard: {context}")
+        
         return {
             'name': _('Upload Document'),
             'type': 'ir.actions.act_window',
             'res_model': 'document.upload.wizard',
             'view_mode': 'form',
             'target': 'new',
-            'context': {
-                'default_name': self.document_type_id.name,
-                'default_document_type': 'required',
-                'default_project_id': self.project_id.id if self.project_id else False,
-                'default_task_id': self.task_id.id if self.task_id else False,
-                'default_document_line_id': self.id,
+            'context': context,
+        }
+    
+    def action_convert_attachments_to_documents(self):
+        """Manual action to convert attachments to documents"""
+        self.ensure_one()
+        _logger.info(f"🔧 Manual conversion triggered for required document line {self.id}")
+        self._convert_attachments_to_documents()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Attachments converted to documents successfully'),
+                'type': 'success',
             }
         }
+    
+    def action_save_and_convert_attachments(self):
+        """Save the record and convert attachments"""
+        self.ensure_one()
+        _logger.info(f"💾 Save and convert triggered for required document line {self.id}")
+        
+        # Save the record first
+        self.write({})
+        
+        # Then convert attachments
+        if self.attachment_ids:
+            _logger.info(f"📎 Found {len(self.attachment_ids)} attachments to convert")
+            self._convert_attachments_to_documents()
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Success'),
+                    'message': _(f'Converted {len(self.attachment_ids)} attachments to documents'),
+                    'type': 'success',
+                }
+            }
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Info'),
+                    'message': _('No attachments found to convert'),
+                    'type': 'info',
+                }
+            }
 
 
 # Temporarily disable NEW PROJECT-LEVEL DOCUMENT MODELS to isolate transaction issues
@@ -630,6 +839,7 @@ if False:  # Disable these models temporarily
                     'default_document_type': 'required',
                     'default_project_id': self.project_id.id,
                     'default_document_line_id': self.id,
+                    'default_user_id': self.env.user.id,
                 }
             }
 
@@ -697,6 +907,7 @@ if False:  # Disable these models temporarily
                     'default_document_type': 'deliverable',
                     'default_project_id': self.project_id.id,
                     'default_document_line_id': self.id,
+                    'default_user_id': self.env.user.id,
                 }
             }
 
@@ -712,6 +923,58 @@ class ProjectProject(models.Model):
     document_required_type_ids = fields.One2many(
         'project.document.required.line', 'project_id', string='Required Document Types')
     # sale_order_id field is inherited from sale_project, do not redefine
+    
+    # --- NEW: X_ Fields for Documents Module Integration ---
+    x_required_document_ids = fields.One2many(
+        'project.required.document', 'x_project_id', string='x_Required Documents')
+    x_deliverable_document_ids = fields.One2many(
+        'project.deliverable.document', 'x_project_id', string='x_Deliverable Documents')
+    
+    # --- NEW: X_ Workflow checkboxes for Required Documents ---
+    x_required_document_complete = fields.Boolean(string="x_Required Document Complete", default=False)
+    x_required_document_confirm = fields.Boolean(string="x_Required Document Confirm", default=False)
+    x_required_document_update = fields.Boolean(string="x_Required Document Update", default=False)
+
+    # --- NEW: X_ Workflow checkboxes for Deliverable Documents ---
+    x_deliverable_document_complete = fields.Boolean(string="x_Deliverable Document Complete", default=False)
+    x_deliverable_document_confirm = fields.Boolean(string="x_Deliverable Document Confirm", default=False)
+    x_deliverable_document_update = fields.Boolean(string="x_Deliverable Document Update", default=False)
+    
+    # --- Documents folder field ---
+    documents_folder_id = fields.Many2one(
+        'documents.document', string="Folder", copy=False,
+        domain="[('type', '=', 'folder')]",
+        help="Folder in which all of the documents of this project will be categorized."
+    )
+    
+    def _ensure_project_folder(self):
+        """Ensure the project has a documents folder"""
+        _logger.info(f"🔧 Ensuring project '{self.name}' has a documents folder")
+        
+        if not self.documents_folder_id:
+            try:
+                # Look for existing folder
+                existing_folder = self.env['documents.document'].search([
+                    ('name', '=', self.name),
+                    ('type', '=', 'folder')
+                ], limit=1)
+                
+                if existing_folder:
+                    self.documents_folder_id = existing_folder.id
+                    _logger.info(f"✅ Found existing folder '{existing_folder.name}' for project '{self.name}'")
+                else:
+                    # Create new folder
+                    new_folder = self.env['documents.document'].create({
+                        'name': self.name,
+                        'type': 'folder',
+                        'company_id': self.company_id.id if self.company_id else False,
+                    })
+                    self.documents_folder_id = new_folder.id
+                    _logger.info(f"✅ Created new documents folder '{new_folder.name}' for project '{self.name}'")
+            except Exception as e:
+                _logger.error(f"❌ Failed to create documents folder for project {self.name}: {e}")
+        else:
+            _logger.info(f"✅ Project '{self.name}' already has documents folder '{self.documents_folder_id.name}'")
 
     # --- Workflow checkboxes for Required Documents ---
     required_document_complete = fields.Boolean(string="Required Document Complete", default=False)
@@ -2017,9 +2280,121 @@ class ProjectProject(models.Model):
                 'params': {
                     'title': _('Debug Error'),
                     'message': f'Error during debug: {str(e)}',
-                    'type': 'danger',
-                }
+                                    'type': 'danger',
             }
+        }
+    
+    def action_convert_all_attachments_to_documents(self):
+        """Convert all attachments in document lines to documents"""
+        self.ensure_one()
+        _logger.info(f"🔄 Converting all attachments to documents for project: {self.name}")
+        
+        converted_count = 0
+        
+        # Convert deliverable document attachments
+        for line in self.document_type_ids:
+            if line.attachment_ids:
+                _logger.info(f"📄 Converting attachments for deliverable line {line.id}")
+                line._convert_attachments_to_documents()
+                converted_count += len(line.attachment_ids)
+        
+        # Convert required document attachments
+        for line in self.document_required_type_ids:
+            if line.attachment_ids:
+                _logger.info(f"📄 Converting attachments for required line {line.id}")
+                line._convert_attachments_to_documents()
+                converted_count += len(line.attachment_ids)
+        
+        _logger.info(f"✅ Converted {converted_count} attachments to documents")
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _(f'Converted {converted_count} attachments to documents'),
+                'type': 'success',
+            }
+        }
+    
+    def action_test_attachment_conversion(self):
+        """Test method to check if attachment conversion is working"""
+        self.ensure_one()
+        _logger.info(f"🧪 Testing attachment conversion for project: {self.name}")
+        
+        # Check if project has a folder
+        if self.documents_folder_id:
+            _logger.info(f"✅ Project has folder: {self.documents_folder_id.name}")
+        else:
+            _logger.info(f"⚠️ Project has no folder")
+        
+        # Check document lines
+        deliverable_count = 0
+        required_count = 0
+        
+        for line in self.document_type_ids:
+            if line.attachment_ids:
+                deliverable_count += len(line.attachment_ids)
+                _logger.info(f"📄 Deliverable line {line.id}: {line.document_type_id.name} - {len(line.attachment_ids)} attachments")
+        
+        for line in self.document_required_type_ids:
+            if line.attachment_ids:
+                required_count += len(line.attachment_ids)
+                _logger.info(f"📄 Required line {line.id}: {line.document_type_id.name} - {len(line.attachment_ids)} attachments")
+        
+        total_attachments = deliverable_count + required_count
+        _logger.info(f"📊 Total attachments found: {total_attachments} (Deliverable: {deliverable_count}, Required: {required_count})")
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Test Results'),
+                'message': _(f'Found {total_attachments} attachments in project. Check logs for details.'),
+                'type': 'info',
+            }
+        }
+    
+    def action_force_attachment_conversion(self):
+        """Force conversion of all attachments in the project"""
+        self.ensure_one()
+        _logger.info(f"🔧 Force converting all attachments for project: {self.name}")
+        
+        converted_count = 0
+        
+        # Convert deliverable document attachments
+        for line in self.document_type_ids:
+            if line.attachment_ids:
+                _logger.info(f"📄 Force converting attachments for deliverable line {line.id}")
+                try:
+                    line._convert_attachments_to_documents()
+                    converted_count += len(line.attachment_ids)
+                    _logger.info(f"✅ Successfully converted {len(line.attachment_ids)} attachments for deliverable line {line.id}")
+                except Exception as e:
+                    _logger.error(f"❌ Failed to convert attachments for deliverable line {line.id}: {e}")
+        
+        # Convert required document attachments
+        for line in self.document_required_type_ids:
+            if line.attachment_ids:
+                _logger.info(f"📄 Force converting attachments for required line {line.id}")
+                try:
+                    line._convert_attachments_to_documents()
+                    converted_count += len(line.attachment_ids)
+                    _logger.info(f"✅ Successfully converted {len(line.attachment_ids)} attachments for required line {line.id}")
+                except Exception as e:
+                    _logger.error(f"❌ Failed to convert attachments for required line {line.id}: {e}")
+        
+        _logger.info(f"🎉 Force conversion completed. Converted {converted_count} attachments to documents")
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Force Conversion Complete'),
+                'message': _(f'Force converted {converted_count} attachments to documents. Check Documents module for results.'),
+                'type': 'success',
+            }
+        }
 
 
 class ProjectTask(models.Model):
@@ -2030,6 +2405,12 @@ class ProjectTask(models.Model):
     document_type_ids = fields.One2many(
         'project.document.type.line', 'task_id', string='Deliverable Document Types')
 
+    # --- NEW: X_ Fields for Documents Module Integration ---
+    x_required_document_ids = fields.One2many(
+        'project.required.document', 'x_task_id', string='x_Required Documents')
+    x_deliverable_document_ids = fields.One2many(
+        'project.deliverable.document', 'x_task_id', string='x_Deliverable Documents')
+
     # Task-level workflow fields (matching original pattern)
     required_document_complete = fields.Boolean(string="Required Document Complete", default=False)
     required_document_confirm = fields.Boolean(string="Required Document Confirm", default=False)
@@ -2038,6 +2419,15 @@ class ProjectTask(models.Model):
     deliverable_document_complete = fields.Boolean(string="Deliverable Document Complete", default=False)
     deliverable_document_confirm = fields.Boolean(string="Deliverable Document Confirm", default=False)
     deliverable_document_update = fields.Boolean(string="Deliverable Document Update", default=False)
+    
+    # --- NEW: X_ Task-level workflow fields ---
+    x_required_document_complete = fields.Boolean(string="x_Required Document Complete", default=False)
+    x_required_document_confirm = fields.Boolean(string="x_Required Document Confirm", default=False)
+    x_required_document_update = fields.Boolean(string="x_Required Document Update", default=False)
+    
+    x_deliverable_document_complete = fields.Boolean(string="x_Deliverable Document Complete", default=False)
+    x_deliverable_document_confirm = fields.Boolean(string="x_Deliverable Document Confirm", default=False)
+    x_deliverable_document_update = fields.Boolean(string="x_Deliverable Document Update", default=False)
 
     # Task-level workflow action methods (matching original pattern)
     def action_complete_required_documents(self):

@@ -1,6 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_project_list_documents_extension" model="ir.ui.view">
-        <field name="name">project.project.list.documents.extension</field>
+    <!-- 🎯 X_ Project List View -->
+    <record id="x_view_project_list_documents_extension" model="ir.ui.view">
+        <field name="name">x.project.project.list.documents.extension</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.view_project"/>
         <field name="arch" type="xml">
@@ -10,12 +12,12 @@
         </field>
     </record>
 
-    <!-- Project Return Form View -->
-    <record id="project_return_form_view" model="ir.ui.view">
-        <field name="name">project.return.form</field>
+    <!-- 🎯 X_ Project Return Form View -->
+    <record id="x_project_return_form_view" model="ir.ui.view">
+        <field name="name">x.project.return.form</field>
         <field name="model">project.project</field>
         <field name="arch" type="xml">
-            <form string="Return Project">
+            <form string="x_Return Project">
                 <group>
                     <field name="name"/>
                     <field name="partner_id" readonly="1"/>
@@ -25,19 +27,19 @@
                     <field name="return_date" default="context_today()"/>
                 </group>
                 <footer>
-                    <button name="action_process_project_return" type="object" string="Return Project" class="btn-primary"/>
+                    <button name="action_process_project_return" type="object" string="x_Return Project" class="btn-primary"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
     </record>
 
-    <!-- Project Update Fields Form View -->
-    <record id="project_update_fields_form_view" model="ir.ui.view">
-        <field name="name">project.update.fields.form</field>
+    <!-- 🎯 X_ Project Update Fields Form View -->
+    <record id="x_project_update_fields_form_view" model="ir.ui.view">
+        <field name="name">x.project.update.fields.form</field>
         <field name="model">project.project</field>
         <field name="arch" type="xml">
-            <form string="Update Project Fields">
+            <form string="x_Update Project Fields">
                 <group>
                     <field name="name"/>
                     <field name="partner_id" readonly="1"/>
@@ -47,144 +49,138 @@
                     <field name="update_date" default="context_today()"/>
                 </group>
                 <footer>
-                    <button name="action_process_project_update" type="object" string="Update Project" class="btn-primary"/>
+                    <button name="action_process_project_update" type="object" string="x_Update Project" class="btn-primary"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
     </record>
 
-    <!-- Project Return Action -->
+    <!-- 🎯 X_ Project Return Action -->
     <record id="action_project_return" model="ir.actions.act_window">
-        <field name="name">Return Project</field>
+        <field name="name">x_Return Project</field>
         <field name="res_model">project.project</field>
         <field name="view_mode">form</field>
-        <field name="view_id" ref="project_return_form_view"/>
+        <field name="view_id" ref="x_project_return_form_view"/>
         <field name="target">new</field>
         <field name="context">{'default_id': active_id}</field>
     </record>
 
-    <!-- Project Update Action -->
+    <!-- 🎯 X_ Project Update Action -->
     <record id="action_project_update" model="ir.actions.act_window">
-        <field name="name">Update Project Fields</field>
+        <field name="name">x_Update Project Fields</field>
         <field name="res_model">project.project</field>
         <field name="view_mode">form</field>
-        <field name="view_id" ref="project_update_fields_form_view"/>
+        <field name="view_id" ref="x_project_update_fields_form_view"/>
         <field name="target">new</field>
         <field name="context">{'default_id': active_id}</field>
     </record>
 
-    <!-- Re-enable Project Form View with Documents (Legacy - for backward compatibility) -->
-    <record id="view_project_form_documents_extension" model="ir.ui.view">
-        <field name="name">project.project.form.documents.extension</field>
+    <!-- 🎯 NEW: X_ Project Form View with Documents (Modern - documents module integration) -->
+    <record id="x_view_project_form_documents_extension" model="ir.ui.view">
+        <field name="name">x.project.project.form.documents.extension</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
-                <button name="%(project_documents_extension.action_project_return)d" type="action" string="Return Project" class="btn-warning" 
+                <button name="%(project_documents_extension.action_project_return)d" type="action" string="x_Return Project" class="btn-warning" 
                         context="{'default_id': id}" groups="project.group_project_user"/>
-                <button name="%(project_documents_extension.action_project_update)d" type="action" string="Update Project" class="btn-info" 
+                <button name="%(project_documents_extension.action_project_update)d" type="action" string="x_Update Project" class="btn-info" 
                         context="{'default_id': id}" groups="project.group_project_user"/>
-                <button name="action_get_checkpoint_status" type="object" string="📊 Checkpoint Status" class="btn-secondary"/>
-                <button name="action_check_project_completion" type="object" string="🏆 Check Completion" class="btn-success"/>
-                <button name="action_convert_all_attachments_to_documents" type="object" string="🔄 Convert Attachments" class="btn-primary" style="margin-left: 8px;"/>
-                <button name="action_force_attachment_conversion" type="object" string="⚡ Force Convert" class="btn-danger" style="margin-left: 4px;"/>
-                <button name="action_test_attachment_conversion" type="object" string="🧪 Test Attachments" class="btn-warning" style="margin-left: 4px;"/>
+                <button name="action_get_checkpoint_status" type="object" string="📊 x_Checkpoint Status" class="btn-secondary"/>
+                <button name="action_check_project_completion" type="object" string="🏆 x_Check Completion" class="btn-success"/>
+                <button name="action_convert_all_attachments_to_documents" type="object" string="🔄 x_Convert Attachments" class="btn-primary" style="margin-left: 8px;"/>
+                <button name="action_force_attachment_conversion" type="object" string="⚡ x_Force Convert" class="btn-danger" style="margin-left: 4px;"/>
+                <button name="action_test_attachment_conversion" type="object" string="🧪 x_Test Attachments" class="btn-warning" style="margin-left: 4px;"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
-                <page string="Required Documents">
+                <page string="x_Required Documents">
                     <div class="o_row" style="display: flex; align-items: center;">
                         <div>
                             <button name="action_complete_required_documents" type="object" string="Complete" class="btn-primary"
-                                invisible="required_document_complete"/>
+                                invisible="x_required_document_complete"/>
                             <button name="action_confirm_required_documents" type="object" string="Confirm" class="btn-secondary"
-                                invisible="required_document_confirm"/>
+                                invisible="x_required_document_confirm"/>
                             <button name="action_update_required_documents" type="object" string="Update" class="btn-secondary"
-                                invisible="required_document_update"/>
+                                invisible="x_required_document_update"/>
                             <button name="action_repeat_required_documents" type="object" string="Repeat" class="btn-danger"/>
                             <button name="action_return_required_documents" type="object" string="Return" class="btn-warning"/>
                         </div>
                         <div style="margin-left: 24px;">
-                            <field name="required_document_complete" widget="boolean_toggle" readonly="1"/>
+                            <field name="x_required_document_complete" widget="boolean_toggle" readonly="1"/>
                             <button name="action_reset_required_document_complete" type="object" string="Reset" class="btn-link"
-                                invisible="not required_document_complete"/>
-                            <field name="required_document_confirm" widget="boolean_toggle" readonly="1"/>
+                                invisible="not x_required_document_complete"/>
+                            <field name="x_required_document_confirm" widget="boolean_toggle" readonly="1"/>
                             <button name="action_reset_required_document_confirm" type="object" string="Reset" class="btn-link"
-                                invisible="not required_document_confirm"/>
-                            <field name="required_document_update" widget="boolean_toggle" readonly="1"/>
+                                invisible="not x_required_document_confirm"/>
+                            <field name="x_required_document_update" widget="boolean_toggle" readonly="1"/>
                             <button name="action_reset_required_document_update" type="object" string="Reset" class="btn-link"
-                                invisible="not required_document_update"/>
+                                invisible="not x_required_document_update"/>
                         </div>
                     </div>
-                    <field name="document_required_type_ids">
+                    <field name="x_required_document_ids">
                         <list editable="bottom">
-                            <field name="document_type_id"/>
-                            <field name="document_id"/>
-                            <field name="is_required"/>
-                            <field name="is_verify"/>
-                            <field name="number"/>
-                            <field name="is_expired"/>
-                            <field name="attachment_ids" widget="many2many_binary"/>
-                            <button name="action_upload_document" type="object" string="Upload" icon="fa-upload"/>
+                            <field name="name"/>
+                            <field name="x_document_type_id"/>
+                            <field name="x_is_required"/>
+                            <field name="x_is_verify"/>
+                            <field name="x_is_expired"/>
+                            <field name="attachment_id"/>
                         </list>
                         <form>
                             <group>
-                                <field name="document_type_id"/>
-                                <field name="document_id"/>
-                                <field name="is_required"/>
-                                <field name="number"/>
-                                <field name="attachment_ids" widget="many2many_binary"/>
+                                <field name="name"/>
+                                <field name="x_document_type_id"/>
+                                <field name="x_is_required"/>
+                                <field name="attachment_id"/>
                             </group>
                         </form>
                     </field>
                 </page>
-                <page string="Deliverable Documents">
+                <page string="x_Deliverable Documents">
                     <div class="o_row" style="display: flex; align-items: center;">
                         <div>
                             <button name="action_complete_deliverable_documents" type="object" string="Complete" class="btn-primary"
-                                invisible="deliverable_document_complete"/>
+                                invisible="x_deliverable_document_complete"/>
                             <button name="action_confirm_deliverable_documents" type="object" string="Confirm" class="btn-secondary"
-                                invisible="deliverable_document_confirm"/>
+                                invisible="x_deliverable_document_confirm"/>
                             <button name="action_update_deliverable_documents" type="object" string="Update" class="btn-secondary"
-                                invisible="deliverable_document_update"/>
+                                invisible="x_deliverable_document_update"/>
                             <button name="action_repeat_deliverable_documents" type="object" string="Repeat" class="btn-danger"/>
                             <button name="action_return_deliverable_documents" type="object" string="Return" class="btn-warning"/>
                         </div>
                         <div style="margin-left: 24px;">
-                            <field name="deliverable_document_complete" widget="boolean_toggle" readonly="1"/>
+                            <field name="x_deliverable_document_complete" widget="boolean_toggle" readonly="1"/>
                             <button name="action_reset_deliverable_document_complete" type="object" string="Reset" class="btn-link"
-                                invisible="not deliverable_document_complete"/>
-                            <field name="deliverable_document_confirm" widget="boolean_toggle" readonly="1"/>
+                                invisible="not x_deliverable_document_complete"/>
+                            <field name="x_deliverable_document_confirm" widget="boolean_toggle" readonly="1"/>
                             <button name="action_reset_deliverable_document_confirm" type="object" string="Reset" class="btn-link"
-                                invisible="not deliverable_document_confirm"/>
-                            <field name="deliverable_document_update" widget="boolean_toggle" readonly="1"/>
+                                invisible="not x_deliverable_document_confirm"/>
+                            <field name="x_deliverable_document_update" widget="boolean_toggle" readonly="1"/>
                             <button name="action_reset_deliverable_document_update" type="object" string="Reset" class="btn-link"
-                                invisible="not deliverable_document_update"/>
+                                invisible="not x_deliverable_document_update"/>
                         </div>
                     </div>
-                    <field name="document_type_ids">
+                    <field name="x_deliverable_document_ids">
                         <list editable="bottom">
-                            <field name="document_type_id"/>
-                            <field name="document_id"/>
-                            <field name="is_required"/>
-                            <field name="is_verify"/>
-                            <field name="number"/>
-                            <field name="is_expired"/>
-                            <field name="attachment_ids" widget="many2many_binary"/>
-                            <button name="action_upload_document" type="object" string="Upload" icon="fa-upload"/>
+                            <field name="name"/>
+                            <field name="x_document_type_id"/>
+                            <field name="x_is_required"/>
+                            <field name="x_is_verify"/>
+                            <field name="x_is_expired"/>
+                            <field name="attachment_id"/>
                         </list>
                         <form>
                             <group>
-                                <field name="document_type_id"/>
-                                <field name="document_id"/>
-                                <field name="is_required"/>
-                                <field name="number"/>
-                                <field name="attachment_ids" widget="many2many_binary"/>
+                                <field name="name"/>
+                                <field name="x_document_type_id"/>
+                                <field name="x_is_required"/>
+                                <field name="attachment_id"/>
                             </group>
                         </form>
                     </field>
                 </page>
-                <!-- Partner Related Fields (Compliance) Tab -->
+                <!-- Partner Related Fields (Compliance) Tab - COMPLETE -->
                 <page name="partner_fields" string="Partner Related Fields">
                     <!-- 📋 Workflow Status Section -->
                     <group string="📋 Workflow Status" name="workflow_status">
@@ -297,7 +293,8 @@
                         </field>
                     </group>
                 </page>
-                                 <!-- Compliance Notes Tab (moved to main level) -->
+                
+                <!-- Compliance Notes Tab (moved to main level) -->
                 <page name="compliance_notes" string="Compliance Notes">
                     <group string="Compliance Workflow">
                         <div class="o_row" style="display: flex; align-items: center; gap: 8px;">
@@ -354,148 +351,48 @@
                         </page>
                     </notebook>
                 </page>
-             </xpath>
-         </field>
-     </record>
+            </xpath>
+        </field>
+    </record>
 
-     <!-- Task Document View - Re-enabled -->
-     <record id="view_task_form2_checkpoint_extension" model="ir.ui.view">
-         <field name="name">project.task.form2.checkpoint.extension</field>
-         <field name="model">project.task</field>
-         <field name="inherit_id" ref="project.view_task_form2"/>
-         <field name="arch" type="xml">
-             <xpath expr="//notebook" position="inside">
-                 <page string="Required Documents">
-                     <field name="document_required_type_ids">
+    <!-- 🎯 NEW: X_ Task Document View with x_ Models -->
+    <record id="x_view_task_form2_checkpoint_extension" model="ir.ui.view">
+        <field name="name">x.project.task.form2.checkpoint.extension</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                                 <page string="x_Required Documents">
+                     <field name="x_required_document_ids">
                          <list editable="bottom">
-                             <field name="document_type_id"/>
-                             <field name="document_id"/>
-                             <field name="is_required"/>
-                             <field name="is_verify"/>
-                             <field name="number"/>
-                             <field name="is_expired"/>
-                             <field name="attachment_ids" widget="many2many_binary"/>
-                             <button name="action_upload_document" type="object" string="Upload" icon="fa-upload"/>
+                             <field name="name"/>
+                             <field name="x_document_type_id"/>
+                             <field name="x_is_required"/>
+                             <field name="x_is_verify"/>
+                             <field name="x_is_expired"/>
+                             <field name="attachment_id"/>
                          </list>
                      </field>
                  </page>
-                 <page string="Deliverable Documents">
-                     <field name="document_type_ids">
+                 <page string="x_Deliverable Documents">
+                     <field name="x_deliverable_document_ids">
                          <list editable="bottom">
-                             <field name="document_type_id"/>
-                             <field name="document_id"/>
-                             <field name="is_required"/>
-                             <field name="is_verify"/>
-                             <field name="number"/>
-                             <field name="is_expired"/>
-                             <field name="attachment_ids" widget="many2many_binary"/>
-                             <button name="action_upload_document" type="object" string="Upload" icon="fa-upload"/>
-                         </list>
-                     </field>
-                                 </page>
-             </xpath>
-             
-             <!-- Add to existing Extra Info tab -->
-             <xpath expr="//page[@name='extra_info']" position="inside">
-                 <!-- Combined Documents Workflow Section -->
-                 <group string="Documents Workflow">
-                     <div class="o_row" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                         <!-- Required Documents Section -->
-                         <div style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                             <strong style="margin-right: 12px;">Required:</strong>
-                             <button name="action_complete_required_documents" type="object" string="Complete" class="btn-sm btn-primary"
-                                 invisible="required_document_complete"/>
-                             <button name="action_confirm_required_documents" type="object" string="Confirm" class="btn-sm btn-secondary"
-                                 invisible="required_document_confirm"/>
-                             <button name="action_update_required_documents" type="object" string="Update" class="btn-sm btn-secondary"
-                                 invisible="required_document_update"/>
-                             <button name="action_repeat_required_documents" type="object" string="Repeat" class="btn-sm btn-danger"/>
-                             <button name="action_return_required_documents" type="object" string="Return" class="btn-sm btn-warning"/>
-                             <field name="required_document_complete" widget="boolean_toggle" readonly="1" style="margin-left: 8px;"/>
-                             <button name="action_reset_required_document_complete" type="object" string="Reset" class="btn-sm btn-link"
-                                 invisible="not required_document_complete"/>
-                             <field name="required_document_confirm" widget="boolean_toggle" readonly="1"/>
-                             <button name="action_reset_required_document_confirm" type="object" string="Reset" class="btn-sm btn-link"
-                                 invisible="not required_document_confirm"/>
-                             <field name="required_document_update" widget="boolean_toggle" readonly="1"/>
-                             <button name="action_reset_required_document_update" type="object" string="Reset" class="btn-sm btn-link"
-                                 invisible="not required_document_update"/>
-                         </div>
-                         
-                         <!-- Deliverable Documents Section -->
-                         <div style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                             <strong style="margin-right: 12px;">Deliverable:</strong>
-                             <button name="action_complete_deliverable_documents" type="object" string="Complete" class="btn-sm btn-primary"
-                                 invisible="deliverable_document_complete"/>
-                             <button name="action_confirm_deliverable_documents" type="object" string="Confirm" class="btn-sm btn-secondary"
-                                 invisible="deliverable_document_confirm"/>
-                             <button name="action_update_deliverable_documents" type="object" string="Update" class="btn-sm btn-secondary"
-                                 invisible="deliverable_document_update"/>
-                             <button name="action_repeat_deliverable_documents" type="object" string="Repeat" class="btn-sm btn-danger"/>
-                             <button name="action_return_deliverable_documents" type="object" string="Return" class="btn-sm btn-warning"/>
-                             <field name="deliverable_document_complete" widget="boolean_toggle" readonly="1" style="margin-left: 8px;"/>
-                             <button name="action_reset_deliverable_document_complete" type="object" string="Reset" class="btn-sm btn-link"
-                                 invisible="not deliverable_document_complete"/>
-                             <field name="deliverable_document_confirm" widget="boolean_toggle" readonly="1"/>
-                             <button name="action_reset_deliverable_document_confirm" type="object" string="Reset" class="btn-sm btn-link"
-                                 invisible="not deliverable_document_confirm"/>
-                             <field name="deliverable_document_update" widget="boolean_toggle" readonly="1"/>
-                             <button name="action_reset_deliverable_document_update" type="object" string="Reset" class="btn-sm btn-link"
-                                 invisible="not deliverable_document_update"/>
-                         </div>
-                     </div>
-                 </group>
-                 
-                 <!-- Checkpoint Configuration Rules Section -->
-                 <group string="Checkpoint Configuration Rules">
-                     <div class="oe_button_box">
-                         <button name="action_copy_checkpoints_from_template" 
-                                 type="object" 
-                                 string="Copy from Template" 
-                                 class="btn-secondary"
-                                 help="Copy checkpoint configuration from the matching product task template"/>
-                     </div>
-                     <field name="task_checkpoint_ids">
-                         <list editable="bottom">
-                             <field name="sequence" widget="handle"/>
-                             <field name="checkpoint_ids" widget="many2many_tags"/>
-                             <field name="stage_id"/>
-                             <field name="milestone_id"/>
-                         </list>
-                         <form>
-                             <group>
-                                 <field name="sequence" widget="handle"/>
-                                 <field name="checkpoint_ids" widget="many2many_tags"/>
-                                 <field name="stage_id"/>
-                                 <field name="milestone_id"/>
-                             </group>
-                         </form>
-                     </field>
-                 </group>
-                 
-                 <!-- 🎯 Task Milestone Management -->
-                 <group string="🎯 Task Milestone Management" name="task_milestone_management">
-                                             <div class="o_row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                             <button name="action_get_task_milestone_progress" type="object" string="📊 Get Task Milestone Progress" class="btn-info"/>
-                             <button name="action_complete_checkpoint_with_milestone_simple" type="object" string="✅ Complete Checkpoint with Milestone" class="btn-success"/>
-                         </div>
-                     <field name="milestone_id"/>
-                     <field name="milestone_ids" readonly="1">
-                         <list>
                              <field name="name"/>
-                             <field name="deadline"/>
-                             <field name="is_reached"/>
-                             <field name="milestone_message"/>
+                             <field name="x_document_type_id"/>
+                             <field name="x_is_required"/>
+                             <field name="x_is_verify"/>
+                             <field name="x_is_expired"/>
+                             <field name="attachment_id"/>
                          </list>
                      </field>
-                 </group>
-             </xpath>
-         </field>
-     </record>
+                 </page>
+            </xpath>
+        </field>
+    </record>
 
-    <!-- Checkpoint History List View -->
-    <record id="view_checkpoint_history_list" model="ir.ui.view">
-        <field name="name">checkpoint.history.list</field>
+    <!-- 🎯 X_ Checkpoint History List View -->
+    <record id="x_view_checkpoint_history_list" model="ir.ui.view">
+        <field name="name">x.checkpoint.history.list</field>
         <field name="model">checkpoint.history</field>
         <field name="arch" type="xml">
             <list>
@@ -509,67 +406,20 @@
         </field>
     </record>
 
-    <!-- Checkpoint History Action -->
+    <!-- 🎯 X_ Checkpoint History Action -->
     <record id="action_checkpoint_history" model="ir.actions.act_window">
-        <field name="name">Checkpoint History</field>
+        <field name="name">x_Checkpoint History</field>
         <field name="res_model">checkpoint.history</field>
         <field name="view_mode">list,form</field>
-        <field name="view_id" ref="view_checkpoint_history_list"/>
+        <field name="view_id" ref="x_view_checkpoint_history_list"/>
     </record>
 
-    <!-- Simple Project Form View with Documents - DISABLED (causing duplicate tabs) -->
-    <!-- <record id="view_project_form_documents_simple" model="ir.ui.view">
-        <field name="name">project.project.form.documents.simple</field>
-        <field name="model">project.project</field>
-        <field name="inherit_id" ref="project.edit_project"/>
-        <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page string="Required Documents">
-                    <field name="document_required_type_ids">
-                        <list editable="bottom">
-                            <field name="document_type_id"/>
-                            <field name="document_id"/>
-                            <field name="is_required"/>
-                            <field name="number"/>
-                        </list>
-                        <form>
-                            <group>
-                                <field name="document_type_id"/>
-                                <field name="document_id"/>
-                                <field name="is_required"/>
-                                <field name="number"/>
-                            </group>
-                        </form>
-                    </field>
-                </page>
-                <page string="Deliverable Documents">
-                    <field name="document_type_ids">
-                        <list editable="bottom">
-                            <field name="document_type_id"/>
-                            <field name="document_id"/>
-                            <field name="is_required"/>
-                            <field name="number"/>
-                        </list>
-                        <form>
-                            <group>
-                                <field name="document_type_id"/>
-                                <field name="document_id"/>
-                                <field name="is_required"/>
-                                <field name="number"/>
-                            </group>
-                        </form>
-                    </field>
-                </page>
-            </xpath>
-        </field>
-    </record> -->
-
-    <!-- Reached Checkpoint Views -->
-    <record id="reached_checkpoint_form" model="ir.ui.view">
-        <field name="name">reached.checkpoint.form</field>
+    <!-- 🎯 X_ Reached Checkpoint Form View -->
+    <record id="x_reached_checkpoint_form" model="ir.ui.view">
+        <field name="name">x.reached.checkpoint.form</field>
         <field name="model">reached.checkpoint</field>
         <field name="arch" type="xml">
-            <form string="Reached Checkpoint">
+            <form string="x_Reached Checkpoint">
                 <sheet>
                     <group>
                         <field name="name"/>
@@ -586,11 +436,12 @@
         </field>
     </record>
 
-    <record id="reached_checkpoint_list" model="ir.ui.view">
-        <field name="name">reached.checkpoint.list</field>
+    <!-- 🎯 X_ Reached Checkpoint List View -->
+    <record id="x_reached_checkpoint_list" model="ir.ui.view">
+        <field name="name">x.reached.checkpoint.list</field>
         <field name="model">reached.checkpoint</field>
         <field name="arch" type="xml">
-            <list string="Reached Checkpoints">
+            <list string="x_Reached Checkpoints">
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="checkpoint_type"/>
@@ -601,11 +452,12 @@
         </field>
     </record>
 
-    <record id="reached_checkpoint_search" model="ir.ui.view">
-        <field name="name">reached.checkpoint.search</field>
+    <!-- 🎯 X_ Reached Checkpoint Search View -->
+    <record id="x_reached_checkpoint_search" model="ir.ui.view">
+        <field name="name">x.reached.checkpoint.search</field>
         <field name="model">reached.checkpoint</field>
         <field name="arch" type="xml">
-            <search string="Search Checkpoints">
+            <search string="x_Search Checkpoints">
                 <field name="name"/>
                 <field name="project_id"/>
                 <field name="checkpoint_type"/>
@@ -622,32 +474,30 @@
         </field>
     </record>
 
-    <!-- Action for Reached Checkpoints -->
+    <!-- 🎯 X_ Action for Reached Checkpoints -->
     <record id="action_reached_checkpoints" model="ir.actions.act_window">
-        <field name="name">Reached Checkpoints</field>
+        <field name="name">x_Reached Checkpoints</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">reached.checkpoint</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No checkpoints found
+                No x_checkpoints found
             </p>
             <p>
-                Create checkpoints to track project progress.
+                Create x_checkpoints to track project progress.
             </p>
         </field>
     </record>
 
-
-
-    <!-- Add Reached Checkpoints Tab to Project Form -->
-    <record id="view_project_form_checkpoint_tab" model="ir.ui.view">
-        <field name="name">project.project.form.checkpoint.tab</field>
+    <!-- 🎯 X_ Add Reached Checkpoints Tab to Project Form -->
+    <record id="x_view_project_form_checkpoint_tab" model="ir.ui.view">
+        <field name="name">x.project.project.form.checkpoint.tab</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page string="Reached Checkpoints">
+                <page string="x_Reached Checkpoints">
                     <group>
                         <field name="checkpoint_summary" readonly="1" widget="html"/>
                     </group>
@@ -677,12 +527,12 @@
         </field>
     </record>
 
-    <!-- Menu Item for Reached Checkpoints -->
+    <!-- 🎯 X_ Menu Item for Reached Checkpoints -->
     <menuitem 
-        id="menu_reached_checkpoints"
-        name="Reached Checkpoints"
+        id="x_menu_reached_checkpoints"
+        name="x_Reached Checkpoints"
         parent="project.menu_project_config"
         action="action_reached_checkpoints"
         sequence="50"/>
 
-</odoo> 
+</odoo>
