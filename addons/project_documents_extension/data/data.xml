@@ -68,5 +68,99 @@
             <field name="expiry_required" eval="False"/>
         </record>
 
+        <!-- Demo Product with x_ Required and Deliverable Documents -->
+        <record id="product_demo_xdocs" model="product.template">
+            <field name="name">Demo Product with x Documents</field>
+            <field name="type">service</field>
+            <field name="service_tracking">new_workflow</field>
+        </record>
+
+        <!-- Required x_Document for Product -->
+        <record id="x_required_document_demo" model="project.required.document">
+            <field name="product_tmpl_id" ref="product_demo_xdocs"/>
+            <field name="x_document_type_id" ref="project_document_type_contract"/>
+            <field name="x_is_required">True</field>
+            <field name="x_expiry_date">2025-12-31</field>
+            <field name="x_reminder_days">15</field>
+            <field name="name">Demo Required Document</field>
+        </record>
+
+        <!-- Deliverable x_Document for Product -->
+        <record id="x_deliverable_document_demo" model="project.deliverable.document">
+            <field name="product_tmpl_id" ref="product_demo_xdocs"/>
+            <field name="x_document_type_id" ref="project_document_type_specification"/>
+            <field name="x_is_required">False</field>
+            <field name="x_expiry_date">2025-12-31</field>
+            <field name="x_reminder_days">30</field>
+            <field name="name">Demo Deliverable Document</field>
+        </record>
+
+        <!-- Additional Demo Products for Testing -->
+        <record id="product_demo_contract_only" model="product.template">
+            <field name="name">Product - Contract Only</field>
+            <field name="type">service</field>
+            <field name="service_tracking">new_workflow</field>
+        </record>
+        <record id="x_required_document_contract_only" model="project.required.document">
+            <field name="product_tmpl_id" ref="product_demo_contract_only"/>
+            <field name="x_document_type_id" ref="project_document_type_contract"/>
+            <field name="x_is_required">True</field>
+            <field name="x_expiry_date">2025-11-30</field>
+            <field name="x_reminder_days">10</field>
+            <field name="name">Contract Only Required</field>
+        </record>
+        <record id="x_deliverable_document_contract_only" model="project.deliverable.document">
+            <field name="product_tmpl_id" ref="product_demo_contract_only"/>
+            <field name="x_document_type_id" ref="project_document_type_contract"/>
+            <field name="x_is_required">False</field>
+            <field name="x_expiry_date">2025-11-30</field>
+            <field name="x_reminder_days">20</field>
+            <field name="name">Contract Only Deliverable</field>
+        </record>
+
+        <record id="product_demo_license_and_invoice" model="product.template">
+            <field name="name">Product - License and Invoice</field>
+            <field name="type">service</field>
+            <field name="service_tracking">new_workflow</field>
+        </record>
+        <record id="x_required_document_license" model="project.required.document">
+            <field name="product_tmpl_id" ref="product_demo_license_and_invoice"/>
+            <field name="x_document_type_id" ref="project_document_type_license"/>
+            <field name="x_is_required">True</field>
+            <field name="x_expiry_date">2025-10-15</field>
+            <field name="x_reminder_days">5</field>
+            <field name="name">License Required</field>
+        </record>
+        <record id="x_deliverable_document_invoice" model="project.deliverable.document">
+            <field name="product_tmpl_id" ref="product_demo_license_and_invoice"/>
+            <field name="x_document_type_id" ref="project_document_type_invoice"/>
+            <field name="x_is_required">False</field>
+            <field name="x_expiry_date">2025-10-15</field>
+            <field name="x_reminder_days">10</field>
+            <field name="name">Invoice Deliverable</field>
+        </record>
+
+        <record id="product_demo_spec_and_contract" model="product.template">
+            <field name="name">Product - Spec and Contract</field>
+            <field name="type">service</field>
+            <field name="service_tracking">new_workflow</field>
+        </record>
+        <record id="x_required_document_spec" model="project.required.document">
+            <field name="product_tmpl_id" ref="product_demo_spec_and_contract"/>
+            <field name="x_document_type_id" ref="project_document_type_specification"/>
+            <field name="x_is_required">True</field>
+            <field name="x_expiry_date">2025-09-01</field>
+            <field name="x_reminder_days">7</field>
+            <field name="name">Spec Required</field>
+        </record>
+        <record id="x_deliverable_document_contract" model="project.deliverable.document">
+            <field name="product_tmpl_id" ref="product_demo_spec_and_contract"/>
+            <field name="x_document_type_id" ref="project_document_type_contract"/>
+            <field name="x_is_required">False</field>
+            <field name="x_expiry_date">2025-09-01</field>
+            <field name="x_reminder_days">14</field>
+            <field name="name">Contract Deliverable</field>
+        </record>
+
     </data>
 </odoo> 
