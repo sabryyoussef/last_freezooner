@@ -48,7 +48,7 @@ class ProjectDocumentService(models.AbstractModel):
             product = line.product_id
             product_template = product.product_tmpl_id
 
-            # Collect unique deliverable document types
+            # Collect unique deliverable document types (legacy)
             for doc_type in product_template.document_type_ids:
                 if self._is_valid_document_type(doc_type):
                     key = (project.id, doc_type.document_type_id.id, sale_order.partner_id.id)
@@ -56,13 +56,35 @@ class ProjectDocumentService(models.AbstractModel):
                         deliverable_keys.add(key)
                         deliverable_types.append(doc_type)
 
-            # Collect unique required document types
+            # Collect unique deliverable document types (x_ fields)
+            _logger.info(f"Product {product_template.name} has {len(getattr(product_template, 'x_deliverable_document_ids', []))} x_deliverable_document_ids")
+            for doc in getattr(product_template, 'x_deliverable_document_ids', []):
+                doc_type_field = getattr(doc, 'x_document_type_id', None) or getattr(doc, 'document_type_id', None)
+                _logger.info(f"Checking x_deliverable_document: {doc} with doc_type_field: {doc_type_field}")
+                if doc_type_field:
+                    key = (project.id, doc_type_field.id, sale_order.partner_id.id)
+                    if key not in deliverable_keys:
+                        deliverable_keys.add(key)
+                        deliverable_types.append(doc)
+
+            # Collect unique required document types (legacy)
             for doc_type in product_template.document_required_type_ids:
                 if self._is_valid_document_type(doc_type):
                     key = (project.id, doc_type.document_type_id.id, sale_order.partner_id.id)
                     if key not in required_keys:
                         required_keys.add(key)
                         required_types.append(doc_type)
+
+            # Collect unique required document types (x_ fields)
+            _logger.info(f"Product {product_template.name} has {len(getattr(product_template, 'x_required_document_ids', []))} x_required_document_ids")
+            for doc in getattr(product_template, 'x_required_document_ids', []):
+                doc_type_field = getattr(doc, 'x_document_type_id', None) or getattr(doc, 'document_type_id', None)
+                _logger.info(f"Checking x_required_document: {doc} with doc_type_field: {doc_type_field}")
+                if doc_type_field:
+                    key = (project.id, doc_type_field.id, sale_order.partner_id.id)
+                    if key not in required_keys:
+                        required_keys.add(key)
+                        required_types.append(doc)
 
         # Process deliverable documents with smart duplicate detection
         for doc_type in deliverable_types:
@@ -92,23 +114,25 @@ class ProjectDocumentService(models.AbstractModel):
         Returns:
             dict with action taken and document info
         """
-        document_type = doc_type.document_type_id
+        # Support both legacy and x_ models
+        document_type = getattr(doc_type, 'x_document_type_id', None) or getattr(doc_type, 'document_type_id', None)
         
         # Enhanced duplicate detection - check existing document lines
         existing_doc_lines = self._find_existing_document_lines(project, document_type, doc_category)
         
-        _logger.info(f"Checking documents for partner {partner.name}, type {document_type.name}")
+        _logger.info(f"Checking documents for partner {partner.name}, type {getattr(document_type, 'name', document_type)}")
         _logger.info(f"Found {len(existing_doc_lines)} potential matches")
         
         if existing_doc_lines:
             # Link to existing document line
             existing_line = existing_doc_lines[0]  # Take the first match
-            _logger.info(f"🔗 Linked existing document line: {existing_line.document_type_id.name}")
+            doc_type_field = getattr(existing_line, 'x_document_type_id', None) or getattr(existing_line, 'document_type_id', None)
+            _logger.info(f"🔗 Linked existing document line: {getattr(doc_type_field, 'name', doc_type_field)}")
             
             # Post message to project
             link_message = f"""
                 <b>Document Linked:</b><br/>
-                • Name: {existing_line.document_type_id.name}<br/>
+                • Name: {getattr(doc_type_field, 'name', doc_type_field)}<br/>
                 • Category: {doc_category}<br/>
                 • Partner: {partner.name}<br/>
             """
@@ -122,7 +146,8 @@ class ProjectDocumentService(models.AbstractModel):
         else:
             # Create new document line
             new_doc_line = self._create_document_line(project, doc_type, partner, doc_category)
-            _logger.info(f"📝 Created new document line: {new_doc_line.document_type_id.name}")
+            doc_type_field = getattr(new_doc_line, 'x_document_type_id', None) or getattr(new_doc_line, 'document_type_id', None)
+            _logger.info(f"📝 Created new document line: {getattr(doc_type_field, 'name', doc_type_field)}")
             
             return {
                 'action': doc_category,
@@ -164,29 +189,48 @@ class ProjectDocumentService(models.AbstractModel):
         Returns:
             document line record
         """
-        document_vals = {
-            'project_id': project.id,
-            'document_type_id': doc_type.document_type_id.id,
-            'is_required': doc_type.is_required,
-            'expiry_date': doc_type.expiry_date if hasattr(doc_type, 'expiry_date') else False,
-            'reminder_days': doc_type.reminder_days if hasattr(doc_type, 'reminder_days') else 30,
-        }
-        
+        document_type = getattr(doc_type, 'x_document_type_id', None) or getattr(doc_type, 'document_type_id', None)
+        is_required = getattr(doc_type, 'x_is_required', None)
+        if is_required is None:
+            is_required = getattr(doc_type, 'is_required', False)
+        expiry_date = getattr(doc_type, 'x_expiry_date', None)
+        if expiry_date is None:
+            expiry_date = getattr(doc_type, 'expiry_date', False)
+        reminder_days = getattr(doc_type, 'x_reminder_days', None)
+        if reminder_days is None:
+            reminder_days = getattr(doc_type, 'reminder_days', 30)
+        name = getattr(doc_type, 'name', None) or (document_type and document_type.name) or 'Document'
+        # Create x_ document line instead of legacy line
         if doc_category == 'deliverable':
-            document_line = self.env['project.document.type.line'].sudo().create(document_vals)
+            document_line = self.env['project.deliverable.document'].sudo().create({
+                'x_project_id': project.id,
+                'x_document_type_id': document_type.id,
+                'x_is_required': is_required,
+                'x_expiry_date': expiry_date,
+                'x_reminder_days': reminder_days,
+                'name': name,
+            })
         else:
-            document_line = self.env['project.document.required.line'].sudo().create(document_vals)
-        
+            _logger.info(f"[REQUIRED DEBUG] Creating project.required.document with: x_project_id={project.id}, x_document_type_id={getattr(document_type, 'id', None)}, x_is_required={is_required}, x_expiry_date={expiry_date}, x_reminder_days={reminder_days}, name={name}")
+            document_line = self.env['project.required.document'].sudo().create({
+                'x_project_id': project.id,
+                'x_document_type_id': document_type.id,
+                'x_is_required': is_required,
+                'x_expiry_date': expiry_date,
+                'x_reminder_days': reminder_days,
+                'name': name,
+            })
         # Log creation
+        doc_type_field = getattr(document_line, 'x_document_type_id', None) or getattr(document_line, 'document_type_id', None)
         creation_message = f"""
-            <b>New Document Created:</b><br/>
-            • Name: {document_line.document_type_id.name}<br/>
+            <b>New x_Document Created:</b><br/>
+            • Name: {document_line.name}<br/>
             • Category: {doc_category}<br/>
             • Partner: {partner.name}<br/>
-            • Required: {document_line.is_required}<br/>
+            • Required: {getattr(document_line, 'x_is_required', getattr(document_line, 'is_required', ''))}<br/>
         """
+        _logger.info(f"📝 Created new document line: {getattr(doc_type_field, 'name', doc_type_field)}")
         project.message_post(body=creation_message)
-        
         return document_line
 
     def _is_valid_document_type(self, doc_type):
@@ -197,12 +241,11 @@ class ProjectDocumentService(models.AbstractModel):
         Returns:
             bool: True if valid, False otherwise
         """
-        if not doc_type.document_type_id:
+        document_type = getattr(doc_type, 'x_document_type_id', None) or getattr(doc_type, 'document_type_id', None)
+        if not document_type:
             return False
-        
-        if not doc_type.document_type_id.name:
+        if not getattr(document_type, 'name', None):
             return False
-            
         return True
 
     @api.model
