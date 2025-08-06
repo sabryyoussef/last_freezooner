@@ -41,7 +41,6 @@
         'wizard/select_task_template.xml',
         'views/attachment_views.xml',
     ],
-    'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': False,
     'license': 'LGPL-3',
