@@ -5,7 +5,10 @@
     "category": "Productivity/Documents",
     "version": "18.0.1.0.0",
     # any module necessary for this one to work correctly
-    "depends": ["base", "contacts", "project", "stock", "sale_subscription", "documents"],
+    "depends": [
+        "base", "contacts", "project", "stock", "sale_subscription", "documents",
+        "project_documents_extension",
+    ],
     # always loaded
     "data": [
         "security/security.xml",
@@ -15,8 +18,8 @@
         'data/cron.xml',
         "views/documents.xml",
         "views/menu_items_actions.xml",
-        "views/project.xml",
-        "views/employee.xml",
+        # "views/project.xml",
+        # "views/employee.xml",
         "views/product_template.xml",
         "wizard/merge_type.xml",
         "wizard/merge_document.xml",
@@ -29,7 +32,6 @@
     },
     "installable": True,
     "application": False,
-    "post_init_hook": "post_init_hook",
     "demo": [
         "demo/demo_data.xml",
     ],

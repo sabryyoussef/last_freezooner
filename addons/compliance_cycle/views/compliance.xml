@@ -11,6 +11,7 @@
                     <field name="name"/>
                     <field name="compliance_status"/>
                     <field name="business_structure_id"/>
+                    <!-- Document fields are on crm.lead model, not res.partner -->
                     <templates>
                         <t t-name="kanban-box">
                             <div class="oe_kanban_global_click">
@@ -24,13 +25,14 @@
                                     <div t-if="record.business_structure_id.raw_value">
                                         <field name="business_structure_id"/>
                                     </div>
+                                    <!-- Document counts would be shown in CRM lead view, not partner view -->
                                 </div>
                             </div>
                         </t>
                     </templates>
                 </kanban>
-                    </field>
-    </record>
+            </field>
+        </record>
     
     <!-- Menu Definitions -->
     <menuitem id="compliance_root_menu" name="Compliance"
@@ -38,5 +40,5 @@
         sequence="3" />
     <menuitem id="initial_data_menu" name="Data"
         parent="compliance_cycle.compliance_root_menu" sequence="20" />
-</data>
+    </data>
 </odoo> 
