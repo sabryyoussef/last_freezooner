@@ -3,15 +3,41 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+def post_init_hook(cr, registry):
+    """Clean up invalid folder_id values when module is installed/upgraded"""
+    env = api.Environment(cr, 1, {})
+    try:
+        # Find all attachments with invalid folder_id
+        invalid_attachments = env['ir.attachment'].search([
+            ('folder_id', '!=', False)
+        ])
+        
+        # Check which folders actually exist
+        existing_folders = env['documents.folder'].search([])
+        existing_folder_ids = existing_folders.ids
+        
+        # Find attachments with non-existent folders
+        to_clean = invalid_attachments.filtered(
+            lambda att: att.folder_id.id not in existing_folder_ids
+        )
+        
+        if to_clean:
+            to_clean.write({'folder_id': False})
+            _logger.info(f"Cleaned up {len(to_clean)} attachments with invalid folder_id")
+        
+    except Exception as e:
+        _logger.error(f"Error during folder cleanup: {e}")
+
 class IrAttachmentInherit(models.Model):
     _inherit = 'ir.attachment'
 
-    folder_id = fields.Many2one(
-        'documents.folder',
-        string='Folder',
-        default=False,
-        help='Select the folder where this document will be stored.'
-    )
+    # Temporarily commented out to prevent AttributeError
+    # folder_id = fields.Many2one(
+    #     'documents.folder',
+    #     string='Folder',
+    #     default=False,
+    #     help='Select the folder where this document will be stored.'
+    # )
 
     @api.depends('folder_id')
     def _compute_safe_folder_id(self):
