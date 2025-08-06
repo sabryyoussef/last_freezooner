@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Extend ir.attachment form view to add folder selection -->
-    <record id="ir_attachment_form_inherit" model="ir.ui.view">
-        <field name="name">ir.attachment.form.inherit</field>
+    <record id="view_attachment_form_inherit_folder" model="ir.ui.view">
+        <field name="name">ir.attachment.form.inherit.folder</field>
         <field name="model">ir.attachment</field>
         <field name="inherit_id" ref="base.view_attachment_form"/>
         <field name="arch" type="xml">
-            <!-- Temporarily removed folder_id field to prevent ParseError -->
-            <!-- Will be re-enabled after data cleanup -->
+            <field name="datas" position="after">
+                <field name="folder_id" options="{'no_create': True, 'no_open': True}" placeholder="Select project folder"/>
+            </field>
         </field>
     </record>
-</odoo>
+</odoo> 
