@@ -7,10 +7,8 @@
             <field name="model">ir.attachment</field>
             <field name="inherit_id" ref="base.view_attachment_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='res_model']" position="after">
-                    <!-- Temporarily commented out until data cleanup is complete -->
-                    <!-- <field name="folder_id" placeholder="Select a folder for this document"/> -->
-                </xpath>
+                <!-- Temporarily removed folder_id field to prevent ParseError -->
+                <!-- Will be re-enabled after data cleanup -->
             </field>
         </record>
     </data>
