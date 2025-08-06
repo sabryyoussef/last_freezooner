@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <data noupdate="1">
-        <!-- Clean up invalid folder_id values in ir.attachment -->
-        <function model="ir.attachment" name="cleanup_invalid_folders"/>
-    </data>
-</odoo> 

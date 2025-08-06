@@ -25,3 +25,4 @@ access_product_template_required_documents,product.template.required.documents,m
 access_checkpoint_history,checkpoint.history,model_checkpoint_history,base.group_user,1,1,1,1
 access_project_required_document_user,project.required.document,model_project_required_document,base.group_user,1,1,1,1
 access_project_deliverable_document_user,project.deliverable.document,model_project_deliverable_document,base.group_user,1,1,1,1
+access_ir_attachment_user,ir.attachment,model_ir_attachment,base.group_user,1,1,1,1
