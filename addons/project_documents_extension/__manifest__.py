@@ -41,7 +41,7 @@
         'wizard/milestone_test_wizard.xml',
         'wizard/quick_milestone_wizard.xml',
         'wizard/select_task_template.xml',
-        'views/attachment_views.xml',
+        # 'views/attachment_views.xml',  # Temporarily disabled to prevent XML schema errors
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
