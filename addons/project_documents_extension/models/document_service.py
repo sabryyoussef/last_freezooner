@@ -85,17 +85,17 @@ class DocumentService(models.AbstractModel):
             product_template = product.product_tmpl_id
 
             # Collect unique deliverable document types
-            if hasattr(product_template, 'document_type_ids'):
-                for doc_type in product_template.document_type_ids:
-                    if self._is_valid_document_type(doc_type):
-                        key = (project.id, doc_type.document_type_id.id, product_template.id)
-                        if key not in deliverable_keys:
-                            deliverable_keys.add(key)
-                            deliverable_types.append(doc_type)
+            # if hasattr(product_template, 'document_type_ids'):
+            #     for doc_type in product_template.document_type_ids:
+            #         if self._is_valid_document_type(doc_type):
+            #             key = (project.id, doc_type.document_type_id.id, product_template.id)
+            #             if key not in deliverable_keys:
+            #                 deliverable_keys.add(key)
+            #                 deliverable_types.append(doc_type)
 
             # Collect unique required document types
-            if hasattr(product_template, 'document_required_type_ids'):
-                for doc_type in product_template.document_required_type_ids:
+            if hasattr(product_template, 'x_required_document_type_ids'):
+                for doc_type in product_template.x_required_document_type_ids:
                     if self._is_valid_document_type(doc_type):
                         key = (project.id, doc_type.document_type_id.id, product_template.id)
                         if key not in required_keys:
