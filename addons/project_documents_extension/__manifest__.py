@@ -31,7 +31,6 @@
         'data/partner_fields_data.xml',
         'data/milestone_templates.xml',
         'data/test_project_documents.xml',
-        'data/demo_sale_order_xdocs.xml',
         
         # === WIZARD FILES ===
         'wizard/document_upload_wizard.xml',
