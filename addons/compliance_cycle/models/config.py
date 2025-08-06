@@ -67,7 +67,7 @@ class RiskCategory(models.Model):
                                                       ('PEP', 'PEP Risk'), ('adverse_media', 'Adverse Media Risk'),
                                                       ('Sanction', 'Sanction Risk'), ('interface', 'Interface Risk'),
                                                       ], required=True)
-    data_ids = fields.Many2many('assessment.list')
+    data_ids = fields.Many2many('assessment.list', 'risk_category_assessment_rel', 'category_id', 'assessment_id')
 
     @api.depends('type')
     def get_record_name(self):

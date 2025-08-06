@@ -12,12 +12,22 @@ class ProjectDocument(models.Model):
         for rec in self:
             check = False
             for task in rec.task_ids:
-                for line1 in task.document_required_type_ids:
-                    if len(line1.attachment_ids) > 0:
+                # Legacy logic commented out
+                # for line1 in task.document_required_type_ids:
+                #     if len(line1.attachment_ids) > 0:
+                #         check = True
+                #         break
+                # for line2 in task.document_type_ids:
+                #     if len(line2.attachment_ids) > 0:
+                #         check = True
+                #         break
+                # New x_ logic
+                for line1 in task.x_required_document_ids:
+                    if hasattr(line1, 'x_attachment_ids') and len(line1.x_attachment_ids) > 0:
                         check = True
                         break
-                for line2 in task.document_type_ids:
-                    if len(line2.attachment_ids) > 0:
+                for line2 in task.x_deliverable_document_ids:
+                    if hasattr(line2, 'x_attachment_ids') and len(line2.x_attachment_ids) > 0:
                         check = True
                         break
             rec.documents_fulfilment = check
