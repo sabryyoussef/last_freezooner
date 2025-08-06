@@ -155,6 +155,83 @@ class ProjectRequiredDocument(models.Model):
         except Exception:
             pass
 
+    def action_convert_x_attachments_to_documents(self):
+        for record in self:
+            project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
+            _logger.info(f"[x_doc] Converting attachments for record {record.id} (project: {getattr(project, 'name', None)})")
+            if not project:
+                _logger.warning(f"[x_doc] No project for record {record.id}")
+                continue
+            # Ensure the project has a folder
+            if not project.documents_folder_id:
+                project._ensure_project_folder()
+            if not project.documents_folder_id:
+                _logger.warning(f"[x_doc] No project folder for record {record.id} after ensure.")
+                continue
+            _logger.info(f"[x_doc] Using folder: {getattr(project.documents_folder_id, 'name', None)} (ID: {getattr(project.documents_folder_id, 'id', None)})")
+            for attachment in record.x_attachment_ids:
+                _logger.info(f"[x_doc] Processing attachment {attachment.id} ({attachment.name}) for record {record.id}")
+                existing_doc = self.env['documents.document'].search([
+                    ('attachment_id', '=', attachment.id)
+                ], limit=1)
+                if not existing_doc:
+                    doc = self.env['documents.document'].create({
+                        'name': attachment.name,
+                        'attachment_id': attachment.id,
+                        'res_model': project._name,
+                        'res_id': project.id,
+                        'type': 'file',
+                        'folder_id': project.documents_folder_id.id,
+                    })
+                    _logger.info(f"[x_doc] Created documents.document {doc.id} in folder {project.documents_folder_id.name}")
+                else:
+                    _logger.info(f"[x_doc] Attachment {attachment.id} already has documents.document {existing_doc.id}")
+
+    # Add a button for user testing
+    def button_convert_x_attachments(self):
+        self.action_convert_x_attachments_to_documents()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Success',
+                'message': 'x_Attachments converted to documents in project folder.',
+                'type': 'success',
+            }
+        }
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._auto_convert_x_attachments()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._auto_convert_x_attachments()
+        return res
+
+    def _auto_convert_x_attachments(self):
+        for record in self:
+            project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
+            if not project:
+                continue
+            if not project.documents_folder_id:
+                project._ensure_project_folder()
+            for attachment in record.x_attachment_ids:
+                existing_doc = self.env['documents.document'].search([
+                    ('attachment_id', '=', attachment.id)
+                ], limit=1)
+                if not existing_doc:
+                    self.env['documents.document'].create({
+                        'name': attachment.name,
+                        'attachment_id': attachment.id,
+                        'res_model': project._name,
+                        'res_id': project.id,
+                        'type': 'file',
+                        'folder_id': project.documents_folder_id.id,
+                    })
+
 
 class ProjectDeliverableDocument(models.Model):
     _name = 'project.deliverable.document'
@@ -253,6 +330,83 @@ class ProjectDeliverableDocument(models.Model):
                         pass
         except Exception:
             pass
+
+    def action_convert_x_attachments_to_documents(self):
+        for record in self:
+            project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
+            _logger.info(f"[x_doc] Converting attachments for record {record.id} (project: {getattr(project, 'name', None)})")
+            if not project:
+                _logger.warning(f"[x_doc] No project for record {record.id}")
+                continue
+            # Ensure the project has a folder
+            if not project.documents_folder_id:
+                project._ensure_project_folder()
+            if not project.documents_folder_id:
+                _logger.warning(f"[x_doc] No project folder for record {record.id} after ensure.")
+                continue
+            _logger.info(f"[x_doc] Using folder: {getattr(project.documents_folder_id, 'name', None)} (ID: {getattr(project.documents_folder_id, 'id', None)})")
+            for attachment in record.x_attachment_ids:
+                _logger.info(f"[x_doc] Processing attachment {attachment.id} ({attachment.name}) for record {record.id}")
+                existing_doc = self.env['documents.document'].search([
+                    ('attachment_id', '=', attachment.id)
+                ], limit=1)
+                if not existing_doc:
+                    doc = self.env['documents.document'].create({
+                        'name': attachment.name,
+                        'attachment_id': attachment.id,
+                        'res_model': project._name,
+                        'res_id': project.id,
+                        'type': 'file',
+                        'folder_id': project.documents_folder_id.id,
+                    })
+                    _logger.info(f"[x_doc] Created documents.document {doc.id} in folder {project.documents_folder_id.name}")
+                else:
+                    _logger.info(f"[x_doc] Attachment {attachment.id} already has documents.document {existing_doc.id}")
+
+    # Add a button for user testing
+    def button_convert_x_attachments(self):
+        self.action_convert_x_attachments_to_documents()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Success',
+                'message': 'x_Attachments converted to documents in project folder.',
+                'type': 'success',
+            }
+        }
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._auto_convert_x_attachments()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._auto_convert_x_attachments()
+        return res
+
+    def _auto_convert_x_attachments(self):
+        for record in self:
+            project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
+            if not project:
+                continue
+            if not project.documents_folder_id:
+                project._ensure_project_folder()
+            for attachment in record.x_attachment_ids:
+                existing_doc = self.env['documents.document'].search([
+                    ('attachment_id', '=', attachment.id)
+                ], limit=1)
+                if not existing_doc:
+                    self.env['documents.document'].create({
+                        'name': attachment.name,
+                        'attachment_id': attachment.id,
+                        'res_model': project._name,
+                        'res_id': project.id,
+                        'type': 'file',
+                        'folder_id': project.documents_folder_id.id,
+                    })
 
 # Inverse fields for project.project
 class ProjectProject(models.Model):

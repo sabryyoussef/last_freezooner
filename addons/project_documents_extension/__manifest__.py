@@ -32,6 +32,7 @@
         'data/milestone_templates.xml',
         'data/test_project_documents.xml',
         'data/demo_sale_order_xdocs.xml',
+        'data/cleanup_folders.xml',
         
         # === WIZARD FILES ===
         'wizard/document_upload_wizard.xml',
@@ -40,6 +41,7 @@
         'wizard/milestone_test_wizard.xml',
         'wizard/quick_milestone_wizard.xml',
         'wizard/select_task_template.xml',
+        'views/attachment_views.xml',
     ],
     'installable': True,
     'application': False,

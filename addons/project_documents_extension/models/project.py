@@ -918,10 +918,8 @@ class ProjectProject(models.Model):
     _inherit = 'project.project'
 
     # --- Existing fields (for backward compatibility) ---
-    document_type_ids = fields.One2many(
-        'project.document.type.line', 'project_id', string='Deliverable Document Types')
-    document_required_type_ids = fields.One2many(
-        'project.document.required.line', 'project_id', string='Required Document Types')
+    # Comment out legacy field definition from ProjectProject
+    # document_type_ids = fields.One2many('project.document.type.line', 'project_id', string='Deliverable Document Types')
     # sale_order_id field is inherited from sale_project, do not redefine
     
     # --- NEW: X_ Fields for Documents Module Integration ---
@@ -1233,58 +1231,71 @@ class ProjectProject(models.Model):
 
     # Re-enable project-level document management methods
     # --- Project-level document management methods ---
+    def _validate_x_required_documents_uploaded(self):
+        missing_docs = []
+        for line in self.x_required_document_ids:
+            if getattr(line, 'x_is_required', False):
+                has_attachment = False
+                if hasattr(line, 'x_attachment_ids') and line.x_attachment_ids:
+                    has_attachment = True
+                if not has_attachment:
+                    attachments = self.env['ir.attachment'].search([
+                        ('res_model', '=', line._name),
+                        ('res_id', '=', line.id),
+                        ('name', '=', line.name)
+                    ], limit=1)
+                    if attachments:
+                        has_attachment = True
+                if not has_attachment:
+                    missing_docs.append(line.name or 'Unknown Document')
+        if missing_docs:
+            raise ValidationError(
+                "You must upload the following x_ required documents before completing this action:\n- " + "\n- ".join(missing_docs)
+            )
+
     def action_complete_required_documents(self):
-        """Complete required documents workflow"""
         self.ensure_one()
-        self.required_document_complete = True
-        self.message_post(body=_("✅ Required Documents workflow completed"))
-        
-        # Create reached checkpoint
+        self._validate_x_required_documents_uploaded()
+        self.x_required_document_complete = True
+        self.message_post(body=_("✅ x_Required Documents workflow completed"))
         self._create_reached_checkpoint("Required Documents Complete")
-        
-        # Check if all checkpoints are reached
         self._check_and_trigger_final_milestone()
+        return True
 
     def action_confirm_required_documents(self):
-        """Confirm required documents workflow"""
         self.ensure_one()
-        self.required_document_confirm = True
-        self.message_post(body=_("✅ Required Documents workflow confirmed"))
-        
-        # Create reached checkpoint
+        self._validate_x_required_documents_uploaded()
+        self.x_required_document_confirm = True
+        self.message_post(body=_("✅ x_Required Documents workflow confirmed"))
         self._create_reached_checkpoint("Required Documents Confirmed")
-        
-        # Check if all checkpoints are reached
         self._check_and_trigger_final_milestone()
+        return True
 
     def action_update_required_documents(self):
-        """Update required documents workflow"""
         self.ensure_one()
-        self.required_document_update = True
-        self.message_post(body=_("✅ Required Documents workflow updated"))
-        
-        # Create reached checkpoint
+        self._validate_x_required_documents_uploaded()
+        self.x_required_document_update = True
+        self.message_post(body=_("✅ x_Required Documents workflow updated"))
         self._create_reached_checkpoint("Required Documents Updated")
-        
-        # Check if all checkpoints are reached
         self._check_and_trigger_final_milestone()
+        return True
 
     def action_reset_required_document_complete(self):
-        """Reset required document complete status"""
         self.ensure_one()
-        self.required_document_complete = False
+        self.required_document_complete = False  # legacy
+        self.x_required_document_complete = False  # x_
         return True
 
     def action_reset_required_document_confirm(self):
-        """Reset required document confirm status"""
         self.ensure_one()
-        self.required_document_confirm = False
+        self.required_document_confirm = False  # legacy
+        self.x_required_document_confirm = False  # x_
         return True
 
     def action_reset_required_document_update(self):
-        """Reset required document update status"""
         self.ensure_one()
-        self.required_document_update = False
+        self.required_document_update = False  # legacy
+        self.x_required_document_update = False  # x_
         return True
 
     def action_repeat_required_documents(self):
@@ -1347,58 +1358,71 @@ class ProjectProject(models.Model):
         self.message_post(body="📤 Required documents returned for review")
         return {'type': 'ir.actions.act_window_close'}
 
+    def _validate_x_deliverable_documents_uploaded(self):
+        missing_docs = []
+        for line in self.x_deliverable_document_ids:
+            if getattr(line, 'x_is_required', False):
+                has_attachment = False
+                if hasattr(line, 'x_attachment_ids') and line.x_attachment_ids:
+                    has_attachment = True
+                if not has_attachment:
+                    attachments = self.env['ir.attachment'].search([
+                        ('res_model', '=', line._name),
+                        ('res_id', '=', line.id),
+                        ('name', '=', line.name)
+                    ], limit=1)
+                    if attachments:
+                        has_attachment = True
+                if not has_attachment:
+                    missing_docs.append(line.name or 'Unknown Document')
+        if missing_docs:
+            raise ValidationError(
+                "You must upload the following x_ deliverable documents before completing this action:\n- " + "\n- ".join(missing_docs)
+            )
+
     def action_complete_deliverable_documents(self):
-        """Complete deliverable documents workflow"""
         self.ensure_one()
-        self.deliverable_document_complete = True
-        self.message_post(body=_("✅ Deliverable Documents workflow completed"))
-        
-        # Create reached checkpoint
+        self._validate_x_deliverable_documents_uploaded()
+        self.x_deliverable_document_complete = True
+        self.message_post(body=_("✅ x_Deliverable Documents workflow completed"))
         self._create_reached_checkpoint("Deliverable Documents Complete")
-        
-        # Check if all checkpoints are reached
         self._check_and_trigger_final_milestone()
+        return True
 
     def action_confirm_deliverable_documents(self):
-        """Confirm deliverable documents workflow"""
         self.ensure_one()
-        self.deliverable_document_confirm = True
-        self.message_post(body=_("✅ Deliverable Documents workflow confirmed"))
-        
-        # Create reached checkpoint
+        self._validate_x_deliverable_documents_uploaded()
+        self.x_deliverable_document_confirm = True
+        self.message_post(body=_("✅ x_Deliverable Documents workflow confirmed"))
         self._create_reached_checkpoint("Deliverable Documents Confirmed")
-        
-        # Check if all checkpoints are reached
         self._check_and_trigger_final_milestone()
+        return True
 
     def action_update_deliverable_documents(self):
-        """Update deliverable documents workflow"""
         self.ensure_one()
-        self.deliverable_document_update = True
-        self.message_post(body=_("✅ Deliverable Documents workflow updated"))
-        
-        # Create reached checkpoint
+        self._validate_x_deliverable_documents_uploaded()
+        self.x_deliverable_document_update = True
+        self.message_post(body=_("✅ x_Deliverable Documents workflow updated"))
         self._create_reached_checkpoint("Deliverable Documents Updated")
-        
-        # Check if all checkpoints are reached
         self._check_and_trigger_final_milestone()
+        return True
 
     def action_reset_deliverable_document_complete(self):
-        """Reset deliverable document complete status"""
         self.ensure_one()
-        self.deliverable_document_complete = False
+        self.deliverable_document_complete = False  # legacy
+        self.x_deliverable_document_complete = False  # x_
         return True
 
     def action_reset_deliverable_document_confirm(self):
-        """Reset deliverable document confirm status"""
         self.ensure_one()
-        self.deliverable_document_confirm = False
+        self.deliverable_document_confirm = False  # legacy
+        self.x_deliverable_document_confirm = False  # x_
         return True
 
     def action_reset_deliverable_document_update(self):
-        """Reset deliverable document update status"""
         self.ensure_one()
-        self.deliverable_document_update = False
+        self.deliverable_document_update = False  # legacy
+        self.x_deliverable_document_update = False  # x_
         return True
 
     def action_repeat_deliverable_documents(self):
@@ -2285,113 +2309,64 @@ class ProjectProject(models.Model):
         }
     
     def action_convert_all_attachments_to_documents(self):
-        """Convert all attachments in document lines to documents"""
+        """
+        Convert all x_ document attachments to documents in the project folder.
+        """
         self.ensure_one()
-        _logger.info(f"🔄 Converting all attachments to documents for project: {self.name}")
-        
-        converted_count = 0
-        
-        # Convert deliverable document attachments
-        for line in self.document_type_ids:
-            if line.attachment_ids:
-                _logger.info(f"📄 Converting attachments for deliverable line {line.id}")
-                line._convert_attachments_to_documents()
-                converted_count += len(line.attachment_ids)
-        
-        # Convert required document attachments
-        for line in self.document_required_type_ids:
-            if line.attachment_ids:
-                _logger.info(f"📄 Converting attachments for required line {line.id}")
-                line._convert_attachments_to_documents()
-                converted_count += len(line.attachment_ids)
-        
-        _logger.info(f"✅ Converted {converted_count} attachments to documents")
-        
+        for line in self.x_deliverable_document_ids:
+            if hasattr(line, 'x_attachment_ids') and line.x_attachment_ids:
+                line.action_convert_x_attachments_to_documents()
+        for line in self.x_required_document_ids:
+            if hasattr(line, 'x_attachment_ids') and line.x_attachment_ids:
+                line.action_convert_x_attachments_to_documents()
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Success'),
-                'message': _(f'Converted {converted_count} attachments to documents'),
+                'title': 'Success',
+                'message': 'All x_ document attachments converted to documents in project folder.',
                 'type': 'success',
             }
         }
     
     def action_test_attachment_conversion(self):
-        """Test method to check if attachment conversion is working"""
+        """
+        Test conversion of all x_ document attachments to documents in the project folder.
+        """
         self.ensure_one()
-        _logger.info(f"🧪 Testing attachment conversion for project: {self.name}")
-        
-        # Check if project has a folder
-        if self.documents_folder_id:
-            _logger.info(f"✅ Project has folder: {self.documents_folder_id.name}")
-        else:
-            _logger.info(f"⚠️ Project has no folder")
-        
-        # Check document lines
-        deliverable_count = 0
-        required_count = 0
-        
-        for line in self.document_type_ids:
-            if line.attachment_ids:
-                deliverable_count += len(line.attachment_ids)
-                _logger.info(f"📄 Deliverable line {line.id}: {line.document_type_id.name} - {len(line.attachment_ids)} attachments")
-        
-        for line in self.document_required_type_ids:
-            if line.attachment_ids:
-                required_count += len(line.attachment_ids)
-                _logger.info(f"📄 Required line {line.id}: {line.document_type_id.name} - {len(line.attachment_ids)} attachments")
-        
-        total_attachments = deliverable_count + required_count
-        _logger.info(f"📊 Total attachments found: {total_attachments} (Deliverable: {deliverable_count}, Required: {required_count})")
-        
+        for line in self.x_deliverable_document_ids:
+            if hasattr(line, 'x_attachment_ids') and line.x_attachment_ids:
+                line.action_convert_x_attachments_to_documents()
+        for line in self.x_required_document_ids:
+            if hasattr(line, 'x_attachment_ids') and line.x_attachment_ids:
+                line.action_convert_x_attachments_to_documents()
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Test Results'),
-                'message': _(f'Found {total_attachments} attachments in project. Check logs for details.'),
-                'type': 'info',
+                'title': 'Success',
+                'message': 'All x_ document attachments test-converted to documents in project folder.',
+                'type': 'success',
             }
         }
     
     def action_force_attachment_conversion(self):
-        """Force conversion of all attachments in the project"""
+        """
+        Force conversion of all x_ document attachments to documents in the project folder.
+        """
         self.ensure_one()
-        _logger.info(f"🔧 Force converting all attachments for project: {self.name}")
-        
-        converted_count = 0
-        
-        # Convert deliverable document attachments
-        for line in self.document_type_ids:
-            if line.attachment_ids:
-                _logger.info(f"📄 Force converting attachments for deliverable line {line.id}")
-                try:
-                    line._convert_attachments_to_documents()
-                    converted_count += len(line.attachment_ids)
-                    _logger.info(f"✅ Successfully converted {len(line.attachment_ids)} attachments for deliverable line {line.id}")
-                except Exception as e:
-                    _logger.error(f"❌ Failed to convert attachments for deliverable line {line.id}: {e}")
-        
-        # Convert required document attachments
-        for line in self.document_required_type_ids:
-            if line.attachment_ids:
-                _logger.info(f"📄 Force converting attachments for required line {line.id}")
-                try:
-                    line._convert_attachments_to_documents()
-                    converted_count += len(line.attachment_ids)
-                    _logger.info(f"✅ Successfully converted {len(line.attachment_ids)} attachments for required line {line.id}")
-                except Exception as e:
-                    _logger.error(f"❌ Failed to convert attachments for required line {line.id}: {e}")
-        
-        _logger.info(f"🎉 Force conversion completed. Converted {converted_count} attachments to documents")
-        
+        for line in self.x_deliverable_document_ids:
+            if hasattr(line, 'x_attachment_ids') and line.x_attachment_ids:
+                line.action_convert_x_attachments_to_documents()
+        for line in self.x_required_document_ids:
+            if hasattr(line, 'x_attachment_ids') and line.x_attachment_ids:
+                line.action_convert_x_attachments_to_documents()
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Force Conversion Complete'),
-                'message': _(f'Force converted {converted_count} attachments to documents. Check Documents module for results.'),
+                'title': 'Success',
+                'message': 'All x_ document attachments force-converted to documents in project folder.',
                 'type': 'success',
             }
         }
