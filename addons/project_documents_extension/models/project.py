@@ -2386,6 +2386,9 @@ class ProjectTask(models.Model):
     x_deliverable_document_ids = fields.One2many(
         'project.deliverable.document', 'x_task_id', string='x_Deliverable Documents')
 
+    # --- Checkpoints Field ---
+    task_checkpoint_ids = fields.One2many('task.checkpoint', 'task_id', string='Checkpoints')
+
     # Task-level workflow fields (matching original pattern)
     required_document_complete = fields.Boolean(string="Required Document Complete", default=False)
     required_document_confirm = fields.Boolean(string="Required Document Confirm", default=False)
