@@ -1,12 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_attachment_form_inherit_folder" model="ir.ui.view">
-        <field name="name">ir.attachment.form.inherit.folder</field>
-        <field name="model">ir.attachment</field>
-        <field name="inherit_id" ref="base.view_attachment_form"/>
-        <field name="arch" type="xml">
-            <field name="datas" position="after">
-                <field name="folder_id"/>
+    <data>
+        <!-- Extend ir.attachment form view to add folder selection -->
+        <record id="ir_attachment_form_inherit" model="ir.ui.view">
+            <field name="name">ir.attachment.form.inherit</field>
+            <field name="model">ir.attachment</field>
+            <field name="inherit_id" ref="base.view_attachment_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='res_model']" position="after">
+                    <!-- Temporarily commented out until data cleanup is complete -->
+                    <!-- <field name="folder_id" placeholder="Select a folder for this document"/> -->
+                </xpath>
             </field>
-        </field>
-    </record>
+        </record>
+    </data>
 </odoo>
