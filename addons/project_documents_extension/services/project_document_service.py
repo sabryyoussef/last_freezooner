@@ -48,14 +48,6 @@ class ProjectDocumentService(models.AbstractModel):
             product = line.product_id
             product_template = product.product_tmpl_id
 
-            # Collect unique deliverable document types (legacy)
-            for doc_type in product_template.document_type_ids:
-                if self._is_valid_document_type(doc_type):
-                    key = (project.id, doc_type.document_type_id.id, sale_order.partner_id.id)
-                    if key not in deliverable_keys:
-                        deliverable_keys.add(key)
-                        deliverable_types.append(doc_type)
-
             # Collect unique deliverable document types (x_ fields)
             _logger.info(f"Product {product_template.name} has {len(getattr(product_template, 'x_deliverable_document_ids', []))} x_deliverable_document_ids")
             for doc in getattr(product_template, 'x_deliverable_document_ids', []):
@@ -66,14 +58,6 @@ class ProjectDocumentService(models.AbstractModel):
                     if key not in deliverable_keys:
                         deliverable_keys.add(key)
                         deliverable_types.append(doc)
-
-            # Collect unique required document types (legacy)
-            for doc_type in product_template.document_required_type_ids:
-                if self._is_valid_document_type(doc_type):
-                    key = (project.id, doc_type.document_type_id.id, sale_order.partner_id.id)
-                    if key not in required_keys:
-                        required_keys.add(key)
-                        required_types.append(doc_type)
 
             # Collect unique required document types (x_ fields)
             _logger.info(f"Product {product_template.name} has {len(getattr(product_template, 'x_required_document_ids', []))} x_required_document_ids")
@@ -166,14 +150,14 @@ class ProjectDocumentService(models.AbstractModel):
             recordset of existing document lines
         """
         if doc_category == 'deliverable':
-            existing_lines = self.env['project.document.type.line'].search([
-                ('project_id', '=', project.id),
-                ('document_type_id', '=', document_type.id)
+            existing_lines = self.env['project.deliverable.document'].search([
+                ('x_project_id', '=', project.id),
+                ('x_document_type_id', '=', document_type.id)
             ])
         else:  # required
-            existing_lines = self.env['project.document.required.line'].search([
-                ('project_id', '=', project.id),
-                ('document_type_id', '=', document_type.id)
+            existing_lines = self.env['project.required.document'].search([
+                ('x_project_id', '=', project.id),
+                ('x_document_type_id', '=', document_type.id)
             ])
         
         return existing_lines
@@ -251,60 +235,55 @@ class ProjectDocumentService(models.AbstractModel):
     @api.model
     def copy_documents_from_project_to_task(self, task, project):
         """
-        Copy documents from project to task with smart duplicate detection
+        Copy x_ required and deliverable documents from project to task.
         Args:
             task: project.task record
             project: project.project record
         Returns:
             dict with copy statistics
         """
-        _logger.info(f"=== COPYING DOCUMENTS FROM PROJECT TO TASK ===")
-        
+        _logger.info(f"=== COPYING x_ DOCUMENTS FROM PROJECT TO TASK ===")
         copy_stats = {
             'deliverable_copied': 0,
             'required_copied': 0,
             'duplicates_prevented': 0
         }
-        
-        # Copy deliverable documents
-        for doc_line in project.document_type_ids:
-            existing_task_doc = self.env['project.document.type.line'].search([
-                ('task_id', '=', task.id),
-                ('document_type_id', '=', doc_line.document_type_id.id)
-            ])
-            
-            if not existing_task_doc:
-                self.env['project.document.type.line'].sudo().create({
-                    'task_id': task.id,
-                    'document_type_id': doc_line.document_type_id.id,
-                    'is_required': doc_line.is_required,
-                    'expiry_date': doc_line.expiry_date,
-                    'reminder_days': doc_line.reminder_days,
-                })
-                copy_stats['deliverable_copied'] += 1
-            else:
-                copy_stats['duplicates_prevented'] += 1
-        
-        # Copy required documents
-        for doc_line in project.document_required_type_ids:
-            existing_task_doc = self.env['project.document.required.line'].search([
-                ('task_id', '=', task.id),
-                ('document_type_id', '=', doc_line.document_type_id.id)
-            ])
-            
-            if not existing_task_doc:
-                self.env['project.document.required.line'].sudo().create({
-                    'task_id': task.id,
-                    'document_type_id': doc_line.document_type_id.id,
-                    'is_required': doc_line.is_required,
-                    'expiry_date': doc_line.expiry_date,
-                    'reminder_days': doc_line.reminder_days,
-                })
-                copy_stats['required_copied'] += 1
-            else:
-                copy_stats['duplicates_prevented'] += 1
-        
-        _logger.info(f"Document copy completed: {copy_stats}")
+        # Copy x_ deliverable documents from product template to project (with attachments)
+        for doc in getattr(product_template, 'x_deliverable_document_ids', []):
+            doc_type_field = getattr(doc, 'x_document_type_id', None) or getattr(doc, 'document_type_id', None)
+            if doc_type_field:
+                key = (project.id, doc_type_field.id, sale_order.partner_id.id)
+                if key not in deliverable_keys:
+                    deliverable_keys.add(key)
+                    new_doc = self.env['project.deliverable.document'].sudo().create({
+                        'x_project_id': project.id,
+                        'x_document_type_id': doc.x_document_type_id.id,
+                        'x_is_required': doc.x_is_required,
+                        'x_expiry_date': doc.x_expiry_date,
+                        'x_reminder_days': doc.x_reminder_days,
+                        'name': doc.name,
+                        'x_attachment_ids': [(6, 0, doc.x_attachment_ids.ids)],
+                    })
+                    deliverable_types.append(new_doc)
+
+        # Copy x_ required documents from product template to project (with attachments)
+        for doc in getattr(product_template, 'x_required_document_ids', []):
+            doc_type_field = getattr(doc, 'x_document_type_id', None) or getattr(doc, 'document_type_id', None)
+            if doc_type_field:
+                key = (project.id, doc_type_field.id, sale_order.partner_id.id)
+                if key not in required_keys:
+                    required_keys.add(key)
+                    new_doc = self.env['project.required.document'].sudo().create({
+                        'x_project_id': project.id,
+                        'x_document_type_id': doc.x_document_type_id.id,
+                        'x_is_required': doc.x_is_required,
+                        'x_expiry_date': doc.x_expiry_date,
+                        'x_reminder_days': doc.x_reminder_days,
+                        'name': doc.name,
+                        'x_attachment_ids': [(6, 0, doc.x_attachment_ids.ids)],
+                    })
+                    required_types.append(new_doc)
+        _logger.info(f"x_ Document copy completed: {copy_stats}")
         return copy_stats
 
     @api.model
@@ -338,14 +317,15 @@ class ProjectDocumentService(models.AbstractModel):
             debug_info['workflow_products'].append({
                 'name': product.name,
                 'template_name': product.product_tmpl_id.name,
-                'deliverable_docs': len(product.product_tmpl_id.document_type_ids),
+                # Commented out legacy deliverable document statistics/debug
+                # 'deliverable_docs': len(product.product_tmpl_id.document_type_ids),
                 'required_docs': len(product.product_tmpl_id.document_required_type_ids)
             })
         
         # Get existing documents
         debug_info['existing_documents'] = {
-            'deliverable': len(project.document_type_ids),
-            'required': len(project.document_required_type_ids)
+            'deliverable': len(project.x_deliverable_document_ids),
+            'required': len(project.x_required_document_ids)
         }
         
         return debug_info 

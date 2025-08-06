@@ -26,12 +26,10 @@ class ProductTemplate(models.Model):
         help='Task templates that will be created when this product is added to a project'
     )
 
-    document_required_type_ids = fields.One2many(
-        'project.document.required.line', 'product_tmpl_id', string='Required Document Types'
-    )
-    document_type_ids = fields.One2many(
-        'project.document.type.line', 'product_tmpl_id', string='Deliverable Document Types'
-    )
+    # Comment out legacy field definition
+    # document_type_ids = fields.One2many(
+    #     'project.document.type.line', 'product_tmpl_id', string='Deliverable Document Types'
+    # )
 
     x_required_document_ids = fields.One2many(
         'project.required.document', 'product_tmpl_id', string='x_Required Documents'
