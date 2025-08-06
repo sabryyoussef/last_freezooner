@@ -1,20 +1,55 @@
 <odoo>
 
-    <!--        <record id="project_client_documents_form" model="ir.ui.view">-->
-<!--            <field name="name">project_client_documents_form</field>-->
-<!--            <field name="model">project.project</field>-->
-<!--            <field name="inherit_id" ref="project.edit_project"/>-->
-<!--            <field name="mode">extension</field>-->
-<!--            <field name="arch" type="xml">-->
-<!--                <xpath expr="//header" position='before'>-->
-<!--                    <field name="documents_fulfilment" invisible="1"/>-->
-<!--                    <div class="alert alert-info oe_edit_only mb-0 text-center" role="status"-->
-<!--                         attrs="{'invisible':[('documents_fulfilment','=', True)]}" style="color: red">-->
-<!--                        <p>Client's Documents Are Not Fulfilled</p>-->
-<!--                    </div>-->
-<!--                </xpath>-->
-<!--            </field>-->
-<!--        </record>-->
+    <record id="project_client_documents_form" model="ir.ui.view">
+        <field name="name">project_client_documents_form</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="mode">extension</field>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+<!--                <page string="x_Required Documents">-->
+<!--                    <field name="x_required_document_ids">-->
+<!--                        <list editable="bottom">-->
+<!--                            <field name="name"/>-->
+<!--                            <field name="x_document_type_id"/>-->
+<!--                            <field name="x_is_required"/>-->
+<!--                            <field name="x_is_verify"/>-->
+<!--                            <field name="x_is_expired"/>-->
+<!--                            <field name="x_attachment_ids" widget="many2many_binary"/>-->
+<!--                        </list>-->
+<!--                        <form>-->
+<!--                            <group>-->
+<!--                                <field name="name"/>-->
+<!--                                <field name="x_document_type_id"/>-->
+<!--                                <field name="x_is_required"/>-->
+<!--                                <field name="x_attachment_ids" widget="many2many_binary"/>-->
+<!--                            </group>-->
+<!--                        </form>-->
+<!--                    </field>-->
+<!--                </page>-->
+<!--                <page string="x_Deliverable Documents">-->
+<!--                    <field name="x_deliverable_document_ids">-->
+<!--                        <list editable="bottom">-->
+<!--                            <field name="name"/>-->
+<!--                            <field name="x_document_type_id"/>-->
+<!--                            <field name="x_is_required"/>-->
+<!--                            <field name="x_is_verify"/>-->
+<!--                            <field name="x_is_expired"/>-->
+<!--                            <field name="x_attachment_ids" widget="many2many_binary"/>-->
+<!--                        </list>-->
+<!--                        <form>-->
+<!--                            <group>-->
+<!--                                <field name="name"/>-->
+<!--                                <field name="x_document_type_id"/>-->
+<!--                                <field name="x_is_required"/>-->
+<!--                                <field name="x_attachment_ids" widget="many2many_binary"/>-->
+<!--                            </group>-->
+<!--                        </form>-->
+<!--                    </field>-->
+<!--                </page>-->
+            </xpath>
+        </field>
+    </record>
 
 <!--        <record id="project_client_documents_kanban" model="ir.ui.view">-->
 <!--            <field name="name">project_client_documents_kanban</field>-->

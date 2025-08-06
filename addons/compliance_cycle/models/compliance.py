@@ -25,10 +25,15 @@ class CrmCompliance(models.Model):
     passport_copy = fields.Binary(string="Passport Copy")
     uae_resident = fields.Binary(string="UAE Resident")
     with_hit = fields.Binary(string="With Hit")
-    document_type_ids = fields.One2many(
-        "compliance.document.lines",
-        "compliance_id"
-    )
+    # Add x_ document fields for new workflow
+    x_required_document_ids = fields.One2many(
+        'project.required.document', 'x_project_id', string='x_Required Documents')
+    x_deliverable_document_ids = fields.One2many(
+        'project.deliverable.document', 'x_project_id', string='x_Deliverable Documents')
+    # Comment out legacy field definition
+    # document_type_ids = fields.One2many(
+    #     'project.document.type.line', 'project_id', string='Deliverable Document Types'
+    # )
 
     def action_view_compliance(self):
         action = self.env.ref('compliance_cycle.compliance_compliance_action').read()[0]
