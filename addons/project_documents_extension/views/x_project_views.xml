@@ -362,30 +362,30 @@
         <field name="inherit_id" ref="project.view_task_form2"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                                 <page string="x_Required Documents">
-                     <field name="x_required_document_ids">
-                         <list editable="bottom">
-                             <field name="name"/>
-                             <field name="x_document_type_id"/>
-                             <field name="x_is_required"/>
-                             <field name="x_is_verify"/>
-                             <field name="x_is_expired"/>
-                             <field name="attachment_id"/>
-                         </list>
-                     </field>
-                 </page>
-                 <page string="x_Deliverable Documents">
-                     <field name="x_deliverable_document_ids">
-                         <list editable="bottom">
-                             <field name="name"/>
-                             <field name="x_document_type_id"/>
-                             <field name="x_is_required"/>
-                             <field name="x_is_verify"/>
-                             <field name="x_is_expired"/>
-                             <field name="attachment_id"/>
-                         </list>
-                     </field>
-                 </page>
+                <page string="x_Required Documents">
+                    <field name="x_required_document_ids">
+                        <list editable="bottom">
+                            <field name="name"/>
+                            <field name="x_document_type_id"/>
+                            <field name="x_is_required"/>
+                            <field name="x_is_verify"/>
+                            <field name="x_is_expired"/>
+                            <field name="attachment_id"/>
+                        </list>
+                    </field>
+                </page>
+                <page string="x_Deliverable Documents">
+                    <field name="x_deliverable_document_ids">
+                        <list editable="bottom">
+                            <field name="name"/>
+                            <field name="x_document_type_id"/>
+                            <field name="x_is_required"/>
+                            <field name="x_is_verify"/>
+                            <field name="x_is_expired"/>
+                            <field name="attachment_id"/>
+                        </list>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>
