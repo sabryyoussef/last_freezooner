@@ -453,6 +453,16 @@
                                      string="Copy from Template" 
                                      class="btn-secondary"
                                      help="Copy checkpoint configuration from the matching product task template"/>
+                             <button name="action_debug_template_checkpoints" 
+                                     type="object" 
+                                     string="Debug Template" 
+                                     class="btn-info"
+                                     help="Debug template checkpoint configurations"/>
+                             <button name="action_debug_task_checkpoints" 
+                                     type="object" 
+                                     string="Debug Task Checkpoints" 
+                                     class="btn-warning"
+                                     help="Debug task checkpoint records"/>
                          </div>
                          <field name="task_checkpoint_ids">
                              <list editable="bottom">

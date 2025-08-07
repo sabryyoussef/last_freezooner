@@ -235,13 +235,54 @@ class ProjectDocumentService(models.AbstractModel):
     @api.model
     def copy_documents_from_project_to_task(self, task, project):
         """
-        Copy x_ required and deliverable documents from project to task.
+        Copy document types from project to task with smart handling
         Args:
-            task: project.task record
+            task: project.task record 
             project: project.project record
         Returns:
             dict with copy statistics
         """
+        _logger.info("=== COPYING x_ DOCUMENTS FROM PROJECT TO TASK ===")
+        
+        # Get the product template if available from the task's sale order line
+        product_template = None
+        if task.sale_line_id and task.sale_line_id.product_id:
+            product_template = task.sale_line_id.product_id.product_tmpl_id
+            
+        documents_created = {
+            'required': 0,
+            'deliverable': 0
+        }
+        
+        try:
+            # Copy required documents
+            if product_template and hasattr(product_template, 'x_required_document_ids'):
+                for doc in product_template.x_required_document_ids:
+                    if doc.x_document_type_id:
+                        self.env['project.document.required.line'].create({
+                            'task_id': task.id,
+                            'document_type_id': doc.x_document_type_id.id,
+                            'is_required': True
+                        })
+                        documents_created['required'] += 1
+                        
+            # Copy deliverable documents
+            if product_template and hasattr(product_template, 'x_deliverable_document_ids'):
+                for doc in product_template.x_deliverable_document_ids:
+                    if doc.x_document_type_id:
+                        self.env['project.document.type.line'].create({
+                            'task_id': task.id,
+                            'document_type_id': doc.x_document_type_id.id,
+                            'is_required': True
+                        })
+                        documents_created['deliverable'] += 1
+                        
+            _logger.info(f"Successfully copied documents to task {task.name} - Created: {documents_created}")
+            return documents_created
+            
+        except Exception as e:
+            _logger.error(f"Error copying documents to task {task.name}: {str(e)}")
+            raise
         _logger.info(f"=== COPYING x_ DOCUMENTS FROM PROJECT TO TASK ===")
         copy_stats = {
             'deliverable_copied': 0,

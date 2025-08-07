@@ -2374,6 +2374,150 @@ class ProjectProject(models.Model):
             }
         }
 
+    def action_copy_checkpoints_from_template(self):
+        """Manual action to copy checkpoints from product task template"""
+        for task in self:
+            if task.project_id and task.project_id.sale_order_id:
+                # Find matching product task template
+                sale_order = task.project_id.sale_order_id
+                for line in sale_order.order_line:
+                    if line.product_id.service_tracking == 'new_workflow':
+                        for template in line.product_id.product_tmpl_id.task_template_ids:
+                            if template.name == task.name:
+                                try:
+                                    _logger.info(f"Found matching template: {template.name} (ID: {template.id})")
+                                    _logger.info(f"Template checkpoint configurations: {len(template.checkpoint_ids) if template.checkpoint_ids else 0}")
+                                    
+                                    # Clear existing checkpoints first
+                                    old_checkpoints = len(task.task_checkpoint_ids)
+                                    task.task_checkpoint_ids.unlink()
+                                    _logger.info(f"Cleared {old_checkpoints} existing checkpoints from task {task.name}")
+                                    
+                                    # Use the service method to copy checkpoints
+                                    checkpoint_service = self.env['task.checkpoint.service']
+                                    checkpoint_service.copy_checkpoints_from_template(task, template)
+                                    
+                                    # Verify checkpoints were copied
+                                    new_checkpoints = len(task.task_checkpoint_ids)
+                                    _logger.info(f"Task {task.name} now has {new_checkpoints} checkpoint configurations")
+                                    
+                                    task.message_post(body=f"Checkpoints copied from template: {template.name} (Copied {new_checkpoints} configurations)")
+                                    return {
+                                        'type': 'ir.actions.client',
+                                        'tag': 'display_notification',
+                                        'params': {
+                                            'title': 'Success',
+                                            'message': f'Checkpoints copied from template: {template.name} ({new_checkpoints} configurations)',
+                                            'type': 'success',
+                                            'sticky': False,
+                                        }
+                                    }
+                                except Exception as e:
+                                    _logger.error(f"Error copying checkpoints from template {template.name}: {e}")
+                                    import traceback
+                                    _logger.error(f"Full traceback: {traceback.format_exc()}")
+                                    return {
+                                        'type': 'ir.actions.client',
+                                        'tag': 'display_notification',
+                                        'params': {
+                                            'title': 'Error',
+                                            'message': f'Failed to copy checkpoints: {str(e)}',
+                                            'type': 'danger',
+                                            'sticky': True,
+                                        }
+                                    }
+
+    def action_debug_template_checkpoints(self):
+        """Debug action to check template checkpoint configurations"""
+        for task in self:
+            if task.project_id and task.project_id.sale_order_id:
+                # Find matching product task template
+                sale_order = task.project_id.sale_order_id
+                debug_info = []
+                debug_info.append(f"Task: {task.name}")
+                debug_info.append(f"Project: {task.project_id.name}")
+                debug_info.append(f"Sale Order: {sale_order.name}")
+                
+                for line in sale_order.order_line:
+                    if line.product_id.service_tracking == 'new_workflow':
+                        debug_info.append(f"Product: {line.product_id.name}")
+                        debug_info.append(f"Product Template: {line.product_id.product_tmpl_id.name}")
+                        debug_info.append(f"Task Templates: {len(line.product_id.product_tmpl_id.task_template_ids)}")
+                        
+                        for template in line.product_id.product_tmpl_id.task_template_ids:
+                            debug_info.append(f"  - Template: {template.name} (ID: {template.id})")
+                            debug_info.append(f"    Checkpoint Configurations: {len(template.checkpoint_ids) if template.checkpoint_ids else 0}")
+                            
+                            if template.checkpoint_ids:
+                                for i, checkpoint in enumerate(template.checkpoint_ids):
+                                    debug_info.append(f"      {i+1}. Checkpoint Config {checkpoint.id}:")
+                                    debug_info.append(f"        - Reached Checkpoints: {len(checkpoint.checkpoint_ids) if checkpoint.checkpoint_ids else 0}")
+                                    debug_info.append(f"        - Stage: {checkpoint.stage_id.name if checkpoint.stage_id else 'None'}")
+                                    debug_info.append(f"        - Milestone: {checkpoint.milestone_id.name if checkpoint.milestone_id else 'None'}")
+                                    debug_info.append(f"        - Sequence: {checkpoint.sequence}")
+                            else:
+                                debug_info.append(f"      No checkpoint configurations found!")
+                
+                # Post debug info to task
+                debug_message = "\n".join(debug_info)
+                task.message_post(body=f"<b>Template Debug Information:</b><br/><pre>{debug_message}</pre>")
+                
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Debug Info',
+                        'message': f'Debug information posted to task. Check the task messages.',
+                        'type': 'info',
+                        'sticky': False,
+                    }
+                }
+
+    def action_debug_task_checkpoints(self):
+        """Debug action to check task checkpoint records"""
+        for task in self:
+            debug_info = []
+            debug_info.append(f"Task: {task.name} (ID: {task.id})")
+            debug_info.append(f"Project: {task.project_id.name if task.project_id else 'None'}")
+            
+            # Check task checkpoint records
+            task_checkpoints = task.task_checkpoint_ids
+            debug_info.append(f"Task Checkpoint Records: {len(task_checkpoints)}")
+            
+            for i, checkpoint in enumerate(task_checkpoints):
+                debug_info.append(f"  {i+1}. Checkpoint {checkpoint.id}:")
+                debug_info.append(f"    - Task ID: {checkpoint.task_id.id if checkpoint.task_id else 'None'}")
+                debug_info.append(f"    - Project ID: {checkpoint.project_id.id if checkpoint.project_id else 'None'}")
+                debug_info.append(f"    - Reached Checkpoints: {len(checkpoint.checkpoint_ids) if checkpoint.checkpoint_ids else 0}")
+                debug_info.append(f"    - Stage: {checkpoint.stage_id.name if checkpoint.stage_id else 'None'}")
+                debug_info.append(f"    - Milestone: {checkpoint.milestone_id.name if checkpoint.milestone_id else 'None'}")
+                debug_info.append(f"    - Sequence: {checkpoint.sequence}")
+                
+                if checkpoint.checkpoint_ids:
+                    for j, reached_cp in enumerate(checkpoint.checkpoint_ids):
+                        debug_info.append(f"      - Reached Checkpoint {j+1}: {reached_cp.name}")
+            
+            # Check if there are any task.checkpoint records for this task
+            all_task_checkpoints = self.env['task.checkpoint'].search([('task_id', '=', task.id)])
+            debug_info.append(f"All Task Checkpoint Records (direct search): {len(all_task_checkpoints)}")
+            for cp in all_task_checkpoints:
+                debug_info.append(f"  - Checkpoint {cp.id}: Task={cp.task_id.name if cp.task_id else 'None'}")
+            
+            # Post debug info to task
+            debug_message = "\n".join(debug_info)
+            task.message_post(body=f"<b>Task Checkpoint Debug Information:</b><br/><pre>{debug_message}</pre>")
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Debug Info',
+                    'message': f'Task checkpoint debug information posted to task. Check the task messages.',
+                    'type': 'info',
+                    'sticky': False,
+                }
+            }
+
 
 class ProjectTask(models.Model):
     _inherit = 'project.task'
@@ -2412,18 +2556,40 @@ class ProjectTask(models.Model):
 
     # Task-level workflow action methods (matching original pattern)
     def action_complete_required_documents(self):
-        """Complete required documents for task"""
+        """Complete required documents for task and trigger stage change"""
         self.ensure_one()
+        _logger.info(f"🎯 action_complete_required_documents called for task '{self.name}' (ID: {self.id})")
+        
         self.required_document_complete = True
         self.message_post(body="✅ Required documents marked as complete")
-        return True
+        
+        # Trigger checkpoint completion with stage change
+        checkpoint_service = self.env['task.checkpoint.service']
+        result = checkpoint_service.complete_checkpoint_with_milestone(self, "Required Document Complete")
+        
+        # Return action to refresh the view
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
 
     def action_confirm_required_documents(self):
-        """Confirm required documents for task"""
+        """Confirm required documents for task and trigger stage change"""
         self.ensure_one()
+        _logger.info(f"🎯 action_confirm_required_documents called for task '{self.name}' (ID: {self.id})")
+        
         self.required_document_confirm = True
         self.message_post(body="✅ Required documents completion confirmed")
-        return True
+        
+        # Trigger checkpoint completion with stage change
+        checkpoint_service = self.env['task.checkpoint.service']
+        result = checkpoint_service.complete_checkpoint_with_milestone(self, "Required Document Confirm")
+        
+        # Return action to refresh the view
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
 
     def action_update_required_documents(self):
         """Update required documents for task"""
@@ -2511,18 +2677,40 @@ class ProjectTask(models.Model):
         return {'type': 'ir.actions.act_window_close'}
 
     def action_complete_deliverable_documents(self):
-        """Complete deliverable documents for task"""
+        """Complete deliverable documents for task and trigger stage change"""
         self.ensure_one()
+        _logger.info(f"🎯 action_complete_deliverable_documents called for task '{self.name}' (ID: {self.id})")
+        
         self.deliverable_document_complete = True
         self.message_post(body="✅ Deliverable documents marked as complete")
-        return True
+        
+        # Trigger checkpoint completion with stage change
+        checkpoint_service = self.env['task.checkpoint.service']
+        result = checkpoint_service.complete_checkpoint_with_milestone(self, "Deliverable Document Complete")
+        
+        # Return action to refresh the view
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
 
     def action_confirm_deliverable_documents(self):
-        """Confirm deliverable documents for task"""
+        """Confirm deliverable documents for task and trigger stage change"""
         self.ensure_one()
+        _logger.info(f"🎯 action_confirm_deliverable_documents called for task '{self.name}' (ID: {self.id})")
+        
         self.deliverable_document_confirm = True
         self.message_post(body="✅ Deliverable documents completion confirmed")
-        return True
+        
+        # Trigger checkpoint completion with stage change
+        checkpoint_service = self.env['task.checkpoint.service']
+        result = checkpoint_service.complete_checkpoint_with_milestone(self, "Deliverable Document Confirm")
+        
+        # Return action to refresh the view
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
 
     def action_update_deliverable_documents(self):
         """Update deliverable documents for task"""
@@ -2635,22 +2823,37 @@ class ProjectTask(models.Model):
                         for template in line.product_id.product_tmpl_id.task_template_ids:
                             if template.name == task.name:
                                 try:
+                                    _logger.info(f"Found matching template: {template.name} (ID: {template.id})")
+                                    _logger.info(f"Template checkpoint configurations: {len(template.checkpoint_ids) if template.checkpoint_ids else 0}")
+                                    
                                     # Clear existing checkpoints first
+                                    old_checkpoints = len(task.task_checkpoint_ids)
                                     task.task_checkpoint_ids.unlink()
-                                    # Copy from template
-                                    copy_checkpoints_from_template_to_task(task.env, task, template)
-                                    task.message_post(body=f"Checkpoints copied from template: {template.name}")
+                                    _logger.info(f"Cleared {old_checkpoints} existing checkpoints from task {task.name}")
+                                    
+                                    # Use the service method to copy checkpoints
+                                    checkpoint_service = self.env['task.checkpoint.service']
+                                    checkpoint_service.copy_checkpoints_from_template(task, template)
+                                    
+                                    # Verify checkpoints were copied
+                                    new_checkpoints = len(task.task_checkpoint_ids)
+                                    _logger.info(f"Task {task.name} now has {new_checkpoints} checkpoint configurations")
+                                    
+                                    task.message_post(body=f"Checkpoints copied from template: {template.name} (Copied {new_checkpoints} configurations)")
                                     return {
                                         'type': 'ir.actions.client',
                                         'tag': 'display_notification',
                                         'params': {
                                             'title': 'Success',
-                                            'message': f'Checkpoints copied from template: {template.name}',
+                                            'message': f'Checkpoints copied from template: {template.name} ({new_checkpoints} configurations)',
                                             'type': 'success',
                                             'sticky': False,
                                         }
                                     }
                                 except Exception as e:
+                                    _logger.error(f"Error copying checkpoints from template {template.name}: {e}")
+                                    import traceback
+                                    _logger.error(f"Full traceback: {traceback.format_exc()}")
                                     return {
                                         'type': 'ir.actions.client',
                                         'tag': 'display_notification',
