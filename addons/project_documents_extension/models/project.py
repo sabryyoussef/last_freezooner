@@ -104,6 +104,18 @@ class ProjectDocumentTypeLine(models.Model):
         string="Document Create Date",
         default=fields.datetime.now(),
     )
+    project_folder_id = fields.Many2one(
+        'documents.document', 
+        string='Project Folder',
+        domain="[('type', '=', 'folder')]",
+        help="Folder in documents where this document will be stored"
+    )
+    project_folder_id = fields.Many2one(
+        'documents.document', 
+        string='Project Folder',
+        domain="[('type', '=', 'folder')]",
+        help="Folder in documents where this document will be stored"
+    )
 
     @api.depends('expiry_date')
     def _compute_expired(self):
@@ -944,6 +956,12 @@ class ProjectProject(models.Model):
         domain="[('type', '=', 'folder')]",
         help="Folder in which all of the documents of this project will be categorized."
     )
+    
+    # --- Document type fields ---
+    document_required_type_ids = fields.One2many(
+        'project.document.required.line', 'project_id', string='Required Document Types')
+    document_type_ids = fields.One2many(
+        'project.document.type.line', 'project_id', string='Deliverable Document Types')
     
     def _ensure_project_folder(self):
         """Ensure the project has a documents folder"""

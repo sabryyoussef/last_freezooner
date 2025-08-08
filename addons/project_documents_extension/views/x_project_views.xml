@@ -92,6 +92,8 @@
                 <button name="action_convert_all_attachments_to_documents" type="object" string="🔄 x_Convert Attachments" class="btn-primary" style="margin-left: 8px;"/>
                 <button name="action_force_attachment_conversion" type="object" string="⚡ x_Force Convert" class="btn-danger" style="margin-left: 4px;"/>
                 <button name="action_test_attachment_conversion" type="object" string="🧪 x_Test Attachments" class="btn-warning" style="margin-left: 4px;"/>
+                <button name="action_assign_project_folders" type="object" string="📁 Assign Folders" class="btn-info" style="margin-left: 4px;"/>
+                <button name="action_set_project_folder" type="object" string="🔧 Set Project Folder" class="btn-secondary" style="margin-left: 4px;"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="x_Required Documents">
@@ -125,6 +127,7 @@
                             <field name="x_is_required"/>
                             <field name="x_is_verify"/>
                             <field name="x_is_expired"/>
+                            <field name="project_folder_id"/>
                             <field name="attachment_id"/>
                         </list>
                         <form>
@@ -132,6 +135,7 @@
                                 <field name="name"/>
                                 <field name="x_document_type_id"/>
                                 <field name="x_is_required"/>
+                                <field name="project_folder_id"/>
                                 <field name="attachment_id"/>
                             </group>
                         </form>
@@ -168,6 +172,7 @@
                             <field name="x_is_required"/>
                             <field name="x_is_verify"/>
                             <field name="x_is_expired"/>
+                            <field name="project_folder_id"/>
                             <field name="attachment_id"/>
                         </list>
                         <form>
@@ -175,6 +180,7 @@
                                 <field name="name"/>
                                 <field name="x_document_type_id"/>
                                 <field name="x_is_required"/>
+                                <field name="project_folder_id"/>
                                 <field name="attachment_id"/>
                             </group>
                         </form>

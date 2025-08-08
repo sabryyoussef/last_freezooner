@@ -54,7 +54,14 @@ class DocumentsDocument(models.Model):
         if 'res_model' in vals or 'res_id' in vals:
             self._auto_assign_to_project_folder()
         
-        return result 
+        return result
+
+    @api.onchange('x_project_id', 'x_task_id')
+    def _onchange_project_auto_assign_folder(self):
+        """Automatically assign project folder when project or task changes"""
+        for record in self:
+            if record.x_project_id or record.x_task_id:
+                record._auto_assign_project_folder() 
 
 
 class ProjectRequiredDocument(models.Model):
@@ -99,6 +106,12 @@ class ProjectRequiredDocument(models.Model):
         default=fields.datetime.now(),
     )
     attachment_id = fields.Many2one('ir.attachment', related='document_id.attachment_id', string='Attachment', store=False, readonly=False)
+    project_folder_id = fields.Many2one(
+        'documents.document', 
+        string='Project Folder',
+        domain="[('type', '=', 'folder')]",
+        help="Folder in documents where this document will be stored"
+    )
     
     # Computed field for dynamic name generation
     x_computed_name = fields.Char(
@@ -107,6 +120,21 @@ class ProjectRequiredDocument(models.Model):
         store=True,
         help='Dynamically generated name based on document type and template'
     )
+
+    def _auto_assign_project_folder(self):
+        """Automatically assign project folder to the document"""
+        for record in self:
+            project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
+            _logger.info(f"[AUTO_FOLDER] Record {record.id}: project={getattr(project, 'name', 'None')}, has_folder={bool(project and project.documents_folder_id)}, current_folder={getattr(record.project_folder_id, 'name', 'None')}")
+            if project and project.documents_folder_id and not record.project_folder_id:
+                record.project_folder_id = project.documents_folder_id.id
+                _logger.info(f"[AUTO_FOLDER] ✅ Assigned folder '{project.documents_folder_id.name}' to record {record.id}")
+            elif not project:
+                _logger.warning(f"[AUTO_FOLDER] ⚠️ No project found for record {record.id}")
+            elif not project.documents_folder_id:
+                _logger.warning(f"[AUTO_FOLDER] ⚠️ Project '{project.name}' has no documents folder")
+            elif record.project_folder_id:
+                _logger.info(f"[AUTO_FOLDER] ℹ️ Record {record.id} already has folder '{record.project_folder_id.name}'")
 
     @api.depends('x_document_type_id', 'x_product_tmpl_id')
     def _compute_x_name(self):
@@ -157,6 +185,7 @@ class ProjectRequiredDocument(models.Model):
         records = super(type(self), self).create(vals_list)
         for record in records:
             record.x_check_duplicate_after_create()
+            record._auto_assign_project_folder()
         return records
 
     def x_check_duplicate_after_create(self):
@@ -231,12 +260,33 @@ class ProjectRequiredDocument(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         records._auto_convert_x_attachments()
+        records._auto_assign_project_folder()
         return records
 
     def write(self, vals):
         res = super().write(vals)
         self._auto_convert_x_attachments()
         return res
+
+    @api.onchange('x_project_id', 'x_task_id')
+    def _onchange_project_auto_assign_folder(self):
+        """Automatically assign project folder when project or task changes"""
+        for record in self:
+            if record.x_project_id or record.x_task_id:
+                record._auto_assign_project_folder()
+
+    def action_assign_project_folders(self):
+        """Manual action to assign project folders to all documents"""
+        self._auto_assign_project_folder()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Success',
+                'message': f'Project folders assigned to {len(self)} document(s).',
+                'type': 'success',
+            }
+        }
 
     def _auto_convert_x_attachments(self):
         for record in self:
@@ -302,6 +352,27 @@ class ProjectDeliverableDocument(models.Model):
         default=fields.datetime.now(),
     )
     attachment_id = fields.Many2one('ir.attachment', related='document_id.attachment_id', string='Attachment', store=False, readonly=False) 
+    project_folder_id = fields.Many2one(
+        'documents.document', 
+        string='Project Folder',
+        domain="[('type', '=', 'folder')]",
+        help="Folder in documents where this document will be stored"
+    )
+    
+    def _auto_assign_project_folder(self):
+        """Automatically assign project folder to the document"""
+        for record in self:
+            project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
+            _logger.info(f"[AUTO_FOLDER] Record {record.id}: project={getattr(project, 'name', 'None')}, has_folder={bool(project and project.documents_folder_id)}, current_folder={getattr(record.project_folder_id, 'name', 'None')}")
+            if project and project.documents_folder_id and not record.project_folder_id:
+                record.project_folder_id = project.documents_folder_id.id
+                _logger.info(f"[AUTO_FOLDER] ✅ Assigned folder '{project.documents_folder_id.name}' to record {record.id}")
+            elif not project:
+                _logger.warning(f"[AUTO_FOLDER] ⚠️ No project found for record {record.id}")
+            elif not project.documents_folder_id:
+                _logger.warning(f"[AUTO_FOLDER] ⚠️ Project '{project.name}' has no documents folder")
+            elif record.project_folder_id:
+                _logger.info(f"[AUTO_FOLDER] ℹ️ Record {record.id} already has folder '{record.project_folder_id.name}'")
     
     # Computed field for dynamic name generation
     x_computed_name = fields.Char(
@@ -360,6 +431,7 @@ class ProjectDeliverableDocument(models.Model):
         records = super(type(self), self).create(vals_list)
         for record in records:
             record.x_check_duplicate_after_create()
+            record._auto_assign_project_folder()
         return records
 
     def x_check_duplicate_after_create(self):
@@ -441,6 +513,26 @@ class ProjectDeliverableDocument(models.Model):
         self._auto_convert_x_attachments()
         return res
 
+    @api.onchange('x_project_id', 'x_task_id')
+    def _onchange_project_auto_assign_folder(self):
+        """Automatically assign project folder when project or task changes"""
+        for record in self:
+            if record.x_project_id or record.x_task_id:
+                record._auto_assign_project_folder()
+
+    def action_assign_project_folders(self):
+        """Manual action to assign project folders to all documents"""
+        self._auto_assign_project_folder()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Success',
+                'message': f'Project folders assigned to {len(self)} document(s).',
+                'type': 'success',
+            }
+        }
+
     def _auto_convert_x_attachments(self):
         for record in self:
             project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
@@ -468,6 +560,125 @@ class ProjectProject(models.Model):
     x_required_document_ids = fields.One2many('project.required.document', 'x_project_id', string='x_Required Documents')
     x_deliverable_document_ids = fields.One2many('project.deliverable.document', 'x_project_id', string='x_Deliverable Documents')
 
+    def _ensure_project_folder(self):
+        """Ensure the project has a documents folder"""
+        if not self.documents_folder_id:
+            # Try to create a folder for the project
+            try:
+                # First, try to find the documents_project folder
+                documents_project_folder = self.env.ref('documents_project.document_project_folder', raise_if_not_found=False)
+                
+                if documents_project_folder:
+                    # Create a new folder for the project under the documents_project folder
+                    folder = self.env['documents.document'].create({
+                        'name': f'Project: {self.name}',
+                        'type': 'folder',
+                        'folder_id': documents_project_folder.id,
+                        'company_id': self.company_id.id,
+                    })
+                else:
+                    # Create a new folder for the project without parent
+                    folder = self.env['documents.document'].create({
+                        'name': f'Project: {self.name}',
+                        'type': 'folder',
+                        'company_id': self.company_id.id,
+                    })
+                
+                self.documents_folder_id = folder.id
+                _logger.info(f"[PROJECT_FOLDER] Created/assigned folder '{folder.name}' for project '{self.name}'")
+                
+            except Exception as e:
+                _logger.error(f"[PROJECT_FOLDER] Failed to create folder for project '{self.name}': {e}")
+                return False
+        
+        return True
+
+    def action_assign_project_folders(self):
+        """Assign project folders to all documents in this project"""
+        # First, ensure the project has a documents folder
+        if not self.documents_folder_id:
+            _logger.info(f"[PROJECT_FOLDER] Project '{self.name}' has no documents folder, creating one...")
+            if not self._ensure_project_folder():
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Error',
+                        'message': f'Failed to create documents folder for project "{self.name}". Please check the logs for details.',
+                        'type': 'danger',
+                    }
+                }
+        
+        if not self.documents_folder_id:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Warning',
+                    'message': f'Project "{self.name}" has no documents folder. Please set a documents folder for this project first.',
+                    'type': 'warning',
+                }
+            }
+        
+        _logger.info(f"[PROJECT_FOLDER] Project '{self.name}' has documents folder: '{self.documents_folder_id.name}'")
+        
+        # Get all documents for this project
+        required_docs = self.env['project.required.document'].search([('x_project_id', '=', self.id)])
+        deliverable_docs = self.env['project.deliverable.document'].search([('x_project_id', '=', self.id)])
+        
+        _logger.info(f"[PROJECT_FOLDER] Found {len(required_docs)} required docs and {len(deliverable_docs)} deliverable docs")
+        
+        # Assign folders to required documents
+        if required_docs:
+            required_docs._auto_assign_project_folder()
+        
+        # Assign folders to deliverable documents
+        if deliverable_docs:
+            deliverable_docs._auto_assign_project_folder()
+        
+        total_docs = len(required_docs) + len(deliverable_docs)
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Success',
+                'message': f'Project folders assigned to {total_docs} document(s) in project "{self.name}". Please refresh the page to see the changes.',
+                'type': 'success',
+            }
+        }
+
+    def action_set_project_folder(self):
+        """Manually set a documents folder for this project"""
+        # Get all available folders
+        folders = self.env['documents.document'].search([
+            ('type', '=', 'folder')
+        ])
+        
+        if not folders:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Warning',
+                    'message': 'No documents folders found. Please create a folder in Documents first.',
+                    'type': 'warning',
+                }
+            }
+        
+        # Return action to open folder selection wizard
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Select Project Folder',
+            'res_model': 'project.folder.selection.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_project_id': self.id,
+                'default_available_folders': [(6, 0, folders.ids)]
+            }
+        }
+
 # Inverse fields for project.task
 class ProjectTask(models.Model):
     _inherit = 'project.task'
@@ -479,6 +690,12 @@ class DocumentsDocument(models.Model):
     _inherit = 'documents.document'
     x_required_document_ids = fields.One2many('project.required.document', 'x_document_id', string='x_Required Document Lines')
     x_deliverable_document_ids = fields.One2many('project.deliverable.document', 'x_document_id', string='x_Deliverable Document Lines')
+    project_folder_id = fields.Many2one(
+        'documents.document', 
+        string='Project Folder',
+        domain="[('type', '=', 'folder')]",
+        help="Folder in documents where this document will be stored"
+    )
 
 # Inverse fields for project.document.type
 class ProjectDocumentType(models.Model):

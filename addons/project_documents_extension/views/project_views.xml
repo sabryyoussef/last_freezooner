@@ -124,6 +124,7 @@
                             <field name="is_verify"/>
                             <field name="number"/>
                             <field name="is_expired"/>
+                            <field name="project_folder_id"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                             <button name="action_upload_document" type="object" string="Upload" icon="fa-upload"/>
                         </list>
@@ -133,6 +134,7 @@
                                 <field name="document_id"/>
                                 <field name="is_required"/>
                                 <field name="number"/>
+                                <field name="project_folder_id"/>
                                 <field name="attachment_ids" widget="many2many_binary"/>
                             </group>
                         </form>
@@ -170,6 +172,7 @@
                             <field name="is_verify"/>
                             <field name="number"/>
                             <field name="is_expired"/>
+                            <field name="project_folder_id"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                             <button name="action_upload_document" type="object" string="Upload" icon="fa-upload"/>
                         </list>
@@ -179,6 +182,7 @@
                                 <field name="document_id"/>
                                 <field name="is_required"/>
                                 <field name="number"/>
+                                <field name="project_folder_id"/>
                                 <field name="attachment_ids" widget="many2many_binary"/>
                             </group>
                         </form>
