@@ -136,6 +136,53 @@ class ProjectRequiredDocument(models.Model):
             elif record.project_folder_id:
                 _logger.info(f"[AUTO_FOLDER] ℹ️ Record {record.id} already has folder '{record.project_folder_id.name}'")
 
+    def _copy_attachments_to_project_folder(self):
+        """Copy attachments to the project's documents folder"""
+        for record in self:
+            project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
+            if not project or not project.documents_folder_id:
+                _logger.warning(f"[COPY_ATTACHMENTS] ⚠️ No project or project folder found for record {record.id}")
+                continue
+            
+            if not record.x_attachment_ids:
+                _logger.info(f"[COPY_ATTACHMENTS] ℹ️ No attachments to copy for record {record.id}")
+                continue
+            
+            _logger.info(f"[COPY_ATTACHMENTS] 📎 Copying {len(record.x_attachment_ids)} attachments to project folder '{project.documents_folder_id.name}'")
+            
+            for attachment in record.x_attachment_ids:
+                try:
+                    # Check if attachment is already in the project folder
+                    existing_doc = self.env['documents.document'].search([
+                        ('attachment_id', '=', attachment.id),
+                        ('folder_id', '=', project.documents_folder_id.id)
+                    ], limit=1)
+                    
+                    if existing_doc:
+                        _logger.info(f"[COPY_ATTACHMENTS] ℹ️ Attachment '{attachment.name}' already exists in project folder")
+                        continue
+                    
+                    # Create a new document in the project folder
+                    new_doc = self.env['documents.document'].create({
+                        'name': attachment.name,
+                        'attachment_id': attachment.id,
+                        'folder_id': project.documents_folder_id.id,
+                        'company_id': project.company_id.id,
+                        'type': 'binary' if attachment.mimetype.startswith('image/') else 'url',
+                    })
+                    
+                    _logger.info(f"[COPY_ATTACHMENTS] ✅ Successfully copied attachment '{attachment.name}' to project folder")
+                    
+                except Exception as e:
+                    _logger.error(f"[COPY_ATTACHMENTS] ❌ Failed to copy attachment '{attachment.name}': {e}")
+
+    @api.onchange('x_attachment_ids')
+    def _onchange_attachments_copy_to_folder(self):
+        """Trigger when attachments are added to copy them to project folder"""
+        if self.x_attachment_ids:
+            _logger.info(f"[ONCHANGE_ATTACHMENTS] 📎 Attachments changed for record {self.id}, will copy to project folder")
+            # Note: onchange doesn't persist changes, so we'll handle this in write method
+
     @api.depends('x_document_type_id', 'x_product_tmpl_id')
     def _compute_x_name(self):
         """Compute dynamic name based on document type and template ID"""
@@ -266,6 +313,9 @@ class ProjectRequiredDocument(models.Model):
     def write(self, vals):
         res = super().write(vals)
         self._auto_convert_x_attachments()
+        # Check if attachments were added and copy them to project folder
+        if 'x_attachment_ids' in vals:
+            self._copy_attachments_to_project_folder()
         return res
 
     @api.onchange('x_project_id', 'x_task_id')
@@ -284,6 +334,19 @@ class ProjectRequiredDocument(models.Model):
             'params': {
                 'title': 'Success',
                 'message': f'Project folders assigned to {len(self)} document(s).',
+                'type': 'success',
+            }
+        }
+
+    def action_copy_attachments_to_project_folder(self):
+        """Manual action to copy attachments to project folder"""
+        self._copy_attachments_to_project_folder()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Success',
+                'message': f'Attachments copied to project folder for {len(self)} document(s).',
                 'type': 'success',
             }
         }
@@ -373,6 +436,53 @@ class ProjectDeliverableDocument(models.Model):
                 _logger.warning(f"[AUTO_FOLDER] ⚠️ Project '{project.name}' has no documents folder")
             elif record.project_folder_id:
                 _logger.info(f"[AUTO_FOLDER] ℹ️ Record {record.id} already has folder '{record.project_folder_id.name}'")
+
+    def _copy_attachments_to_project_folder(self):
+        """Copy attachments to the project's documents folder"""
+        for record in self:
+            project = record.x_project_id or (record.x_task_id and record.x_task_id.project_id)
+            if not project or not project.documents_folder_id:
+                _logger.warning(f"[COPY_ATTACHMENTS] ⚠️ No project or project folder found for record {record.id}")
+                continue
+            
+            if not record.x_attachment_ids:
+                _logger.info(f"[COPY_ATTACHMENTS] ℹ️ No attachments to copy for record {record.id}")
+                continue
+            
+            _logger.info(f"[COPY_ATTACHMENTS] 📎 Copying {len(record.x_attachment_ids)} attachments to project folder '{project.documents_folder_id.name}'")
+            
+            for attachment in record.x_attachment_ids:
+                try:
+                    # Check if attachment is already in the project folder
+                    existing_doc = self.env['documents.document'].search([
+                        ('attachment_id', '=', attachment.id),
+                        ('folder_id', '=', project.documents_folder_id.id)
+                    ], limit=1)
+                    
+                    if existing_doc:
+                        _logger.info(f"[COPY_ATTACHMENTS] ℹ️ Attachment '{attachment.name}' already exists in project folder")
+                        continue
+                    
+                    # Create a new document in the project folder
+                    new_doc = self.env['documents.document'].create({
+                        'name': attachment.name,
+                        'attachment_id': attachment.id,
+                        'folder_id': project.documents_folder_id.id,
+                        'company_id': project.company_id.id,
+                        'type': 'binary' if attachment.mimetype.startswith('image/') else 'url',
+                    })
+                    
+                    _logger.info(f"[COPY_ATTACHMENTS] ✅ Successfully copied attachment '{attachment.name}' to project folder")
+                    
+                except Exception as e:
+                    _logger.error(f"[COPY_ATTACHMENTS] ❌ Failed to copy attachment '{attachment.name}': {e}")
+
+    @api.onchange('x_attachment_ids')
+    def _onchange_attachments_copy_to_folder(self):
+        """Trigger when attachments are added to copy them to project folder"""
+        if self.x_attachment_ids:
+            _logger.info(f"[ONCHANGE_ATTACHMENTS] 📎 Attachments changed for record {self.id}, will copy to project folder")
+            # Note: onchange doesn't persist changes, so we'll handle this in write method
     
     # Computed field for dynamic name generation
     x_computed_name = fields.Char(
@@ -511,6 +621,9 @@ class ProjectDeliverableDocument(models.Model):
     def write(self, vals):
         res = super().write(vals)
         self._auto_convert_x_attachments()
+        # Check if attachments were added and copy them to project folder
+        if 'x_attachment_ids' in vals:
+            self._copy_attachments_to_project_folder()
         return res
 
     @api.onchange('x_project_id', 'x_task_id')
